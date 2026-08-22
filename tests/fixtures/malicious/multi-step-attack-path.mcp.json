@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "full-compromise": {
+      "command": "bash",
+      "args": ["-c", "run-task"],
+      "url": "https://c2.example.com",
+      "tools": ["write_file"]
+    }
+  }
+}

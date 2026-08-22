@@ -1,0 +1,108 @@
+name: "MCP Security Check"
+description: "Scan MCP servers, AI-agent permissions and attack paths before merging a GitHub pull request."
+author: "MCP Security Check Contributors"
+
+branding:
+  icon: "shield"
+  color: "red"
+
+inputs:
+  path:
+    description: "Directory to scan (HEAD checkout). Defaults to the workflow workspace."
+    required: false
+    default: "."
+  base-path:
+    description: >
+      Optional directory containing the BASE branch checkout, used to run a
+      capability diff (BASE vs HEAD) instead of a single-tree scan. When
+      omitted, only a single-tree scan of `path` runs (no diff/escalation
+      findings).
+    required: false
+    default: ""
+  config:
+    description: "Path to a policy YAML file (see rules/default.yaml)."
+    required: false
+    default: ""
+  format:
+    description: "Additional output format written to --output-file: json | sarif | markdown | terminal."
+    required: false
+    default: "markdown"
+  output-file:
+    description: "File path to write the report to."
+    required: false
+    default: "mcp-security-report.md"
+  sarif-file:
+    description: "File path to write a SARIF report to, for GitHub code scanning upload."
+    required: false
+    default: "mcp-security-results.sarif"
+  fail-on:
+    description: "Severity threshold (critical|high|medium|low|info) that forces the Action to fail the workflow."
+    required: false
+    default: "critical"
+
+outputs:
+  decision:
+    description: "ALLOW, WARN, or BLOCK."
+  risk-score:
+    description: "Risk score from 0 to 100."
+  report-path:
+    description: "Path to the generated report file (matches output-file)."
+  sarif-path:
+    description: "Path to the generated SARIF file (matches sarif-file)."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install mcp-security-check
+      shell: bash
+      run: pip install "${{ github.action_path }}"
+
+    - name: Run scan (single tree)
+      if: ${{ inputs.base-path == '' }}
+      shell: bash
+      run: |
+        set +e
+        ARGS=(scan "${{ inputs.path }}" --format "${{ inputs.format }}" --output "${{ inputs.output-file }}" --fail-on "${{ inputs.fail-on }}")
+        if [ -n "${{ inputs.config }}" ]; then ARGS+=(--config "${{ inputs.config }}"); fi
+        mcp-security-check "${ARGS[@]}"
+        echo "SCAN_EXIT_CODE=$?" >> "$GITHUB_ENV"
+
+        mcp-security-check scan "${{ inputs.path }}" --format sarif --output "${{ inputs.sarif-file }}" $( [ -n "${{ inputs.config }}" ] && echo --config "${{ inputs.config }}" )
+
+    - name: Run scan (capability diff: base vs head)
+      if: ${{ inputs.base-path != '' }}
+      shell: bash
+      run: |
+        set +e
+        ARGS=(diff "${{ inputs.base-path }}" "${{ inputs.path }}" --format "${{ inputs.format }}" --output "${{ inputs.output-file }}" --fail-on "${{ inputs.fail-on }}")
+        if [ -n "${{ inputs.config }}" ]; then ARGS+=(--config "${{ inputs.config }}"); fi
+        mcp-security-check "${ARGS[@]}"
+        echo "SCAN_EXIT_CODE=$?" >> "$GITHUB_ENV"
+
+        mcp-security-check diff "${{ inputs.base-path }}" "${{ inputs.path }}" --format sarif --output "${{ inputs.sarif-file }}" $( [ -n "${{ inputs.config }}" ] && echo --config "${{ inputs.config }}" )
+
+    - name: Extract decision/score for outputs
+      shell: bash
+      run: |
+        mcp-security-check scan "${{ inputs.path }}" --format json --output /tmp/mcp-security.json --fail-on "${{ inputs.fail-on }}" || true
+        DECISION=$(python3 -c "import json;print(json.load(open('/tmp/mcp-security.json'))['decision'])")
+        SCORE=$(python3 -c "import json;print(json.load(open('/tmp/mcp-security.json'))['risk_score'])")
+        echo "decision=$DECISION" >> "$GITHUB_OUTPUT"
+        echo "risk-score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "report-path=${{ inputs.output-file }}" >> "$GITHUB_OUTPUT"
+        echo "sarif-path=${{ inputs.sarif-file }}" >> "$GITHUB_OUTPUT"
+
+    - name: Fail workflow according to policy
+      shell: bash
+      run: |
+        code="${SCAN_EXIT_CODE:-0}"
+        if [ "$code" = "2" ] || [ "$code" = "3" ]; then
+          echo "MCP Security Check: decision requires blocking this workflow (exit code $code)."
+          exit 1
+        fi
+        echo "MCP Security Check: passed (exit code $code)."

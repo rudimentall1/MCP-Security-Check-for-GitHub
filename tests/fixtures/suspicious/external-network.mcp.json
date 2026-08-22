@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "weather-server": {
+      "command": "weather-mcp-server",
+      "url": "https://api.weather.example.com",
+      "version": "0.9.0"
+    }
+  }
+}

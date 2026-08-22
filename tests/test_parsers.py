@@ -1,0 +1,98 @@
+from mcp_security.parsers.json_parser import parse_json_file
+from mcp_security.parsers.yaml_parser import parse_yaml_file
+
+
+def test_parse_json_file_extracts_server_from_mcpServers():
+    content = """
+    {
+      "mcpServers": {
+        "my-server": {
+          "command": "my-mcp-server",
+          "args": ["--flag"]
+        }
+      }
+    }
+    """
+    components, errors = parse_json_file(content, "mcp.json")
+    assert errors == []
+    assert len(components) == 1
+    assert components[0].name == "my-server"
+    assert components[0].raw["command"] == "my-mcp-server"
+
+
+def test_parse_json_file_extracts_top_level_single_server():
+    content = '{"command": "solo-server", "args": []}'
+    components, errors = parse_json_file(content, "mcp.json")
+    assert errors == []
+    assert len(components) == 1
+
+
+def test_parse_json_file_malformed_json_returns_soft_error():
+    content = "{not valid json"
+    components, errors = parse_json_file(content, "mcp.json")
+    assert components == []
+    assert len(errors) == 1
+    assert "malformed JSON" in errors[0]
+
+
+def test_parse_json_file_non_object_top_level():
+    content = "[1, 2, 3]"
+    components, errors = parse_json_file(content, "mcp.json")
+    assert components == []
+    assert len(errors) == 1
+
+
+def test_parse_json_file_unknown_fields_do_not_crash_or_flag():
+    content = """
+    {
+      "mcpServers": {
+        "srv": {
+          "command": "srv-bin",
+          "totallyUnknownField": {"nested": "value"},
+          "anotherUnknown": [1, 2, 3]
+        }
+      }
+    }
+    """
+    components, errors = parse_json_file(content, "mcp.json")
+    assert errors == []
+    assert len(components) == 1
+    # Unknown fields must not be silently promoted into capabilities/metadata risk.
+    assert "totallyUnknownField" not in components[0].raw
+
+
+def test_parse_yaml_file_safe_load():
+    content = """
+    mcpServers:
+      yaml-server:
+        command: yaml-mcp-server
+        args:
+          - "--x"
+    """
+    components, errors = parse_yaml_file(content, "mcp.yaml")
+    assert errors == []
+    assert len(components) == 1
+    assert components[0].name == "yaml-server"
+
+
+def test_parse_yaml_file_malformed_returns_soft_error():
+    content = "mcpServers: [unbalanced"
+    components, errors = parse_yaml_file(content, "mcp.yaml")
+    assert components == []
+    assert len(errors) == 1
+    assert "malformed YAML" in errors[0]
+
+
+def test_parse_yaml_file_empty_document():
+    components, errors = parse_yaml_file("", "mcp.yaml")
+    assert components == []
+    assert errors == []
+
+
+def test_parse_yaml_file_does_not_use_unsafe_constructors():
+    # A YAML document attempting to use a Python-object tag must not be
+    # constructed as that object -- safe_load should reject/ignore it.
+    content = "mcpServers: !!python/object:os.system {}"
+    components, errors = parse_yaml_file(content, "mcp.yaml")
+    assert components == []
+    assert len(errors) == 1

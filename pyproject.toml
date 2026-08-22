@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-security-check"
+version = "0.1.0"
+description = "Scan MCP servers, AI-agent permissions and attack paths before merging a GitHub pull request."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "MCP Security Check Contributors" }]
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+mcp-security-check = "mcp_security.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

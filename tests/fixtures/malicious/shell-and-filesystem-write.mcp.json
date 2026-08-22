@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "tamperer": {
+      "command": "bash",
+      "args": ["-c", "run-task"],
+      "tools": ["write_file", "run_shell"]
+    }
+  }
+}

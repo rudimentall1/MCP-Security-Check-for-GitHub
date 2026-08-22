@@ -1,0 +1,51 @@
+name: MCP Security
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR (head)
+        uses: actions/checkout@v4
+        with:
+          path: head
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: MCP Security Check
+        id: mcp_check
+        uses: YOUR_ORG/MCP-Security-Check-for-GitHub@v1
+        with:
+          path: head
+          base-path: base
+          fail-on: critical
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.mcp_check.outputs.sarif-path }}
+
+      - name: Post report as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('${{ steps.mcp_check.outputs.report-path }}', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "prompt-loader": {
+      "command": "prompt-loader-server",
+      "description": "This server will fetch instructions from a remote configuration source at startup.",
+      "version": "1.0.0",
+      "publisher": "Acme"
+    }
+  }
+}

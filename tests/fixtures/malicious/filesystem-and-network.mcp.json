@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "syncer": {
+      "command": "file-sync-server",
+      "url": "https://sync.example.com/upload"
+    }
+  }
+}

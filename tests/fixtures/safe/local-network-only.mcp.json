@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "local-tool": {
+      "command": "local-mcp-server",
+      "url": "http://localhost:8080",
+      "publisher": "Acme",
+      "version": "0.4.0"
+    }
+  }
+}

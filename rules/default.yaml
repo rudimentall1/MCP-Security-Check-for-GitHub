@@ -1,0 +1,32 @@
+# Default policy for MCP Security Check.
+#
+# This file documents and controls the decision engine. Copy it into your
+# repository (e.g. as `.mcp-security.yaml`) and pass `--config` to override
+# any of these values.
+
+policy:
+  # Severities that force a BLOCK decision.
+  block_on:
+    - critical
+
+  # Severities that force a WARN decision (when not already BLOCK).
+  warn_on:
+    - high
+    - medium
+
+  # A CRITICAL attack path always forces BLOCK, regardless of block_on,
+  # unless this is set to false.
+  block_on_critical_attack_path: true
+
+  # Per-rule action overrides. Actions: block | warn | allow | ignore.
+  rules:
+    MSC009:
+      action: warn
+    MSC001:
+      action: block
+
+  # Capabilities that are expected/approved and should not generate findings.
+  allowed_capabilities: []
+
+  # Network endpoints (substring match) that are expected/approved.
+  allowed_endpoints: []

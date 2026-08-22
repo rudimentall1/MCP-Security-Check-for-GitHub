@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "docs-server": {
+      "command": "docs-mcp-server",
+      "args": ["--readonly"],
+      "publisher": "Acme Docs",
+      "version": "1.2.3"
+    }
+  }
+}
