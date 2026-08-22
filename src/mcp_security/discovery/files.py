@@ -58,10 +58,18 @@ def iter_candidate_files(
     ignored = set(ignored_dirs)
     results: List[DiscoveredFile] = []
 
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
         dirnames[:] = [d for d in dirnames if d not in ignored and not d.startswith(".git")]
         for filename in filenames:
             full_path = os.path.join(dirpath, filename)
+            # Defense in depth: os.walk(followlinks=False) already refuses to
+            # *descend into* symlinked directories, but a symlinked *file*
+            # can still appear in `filenames`. Skip it explicitly rather than
+            # reading through it -- it may point outside the scanned tree
+            # (e.g. to a device file or an attacker-controlled path), and its
+            # target is not really "part of this repository".
+            if os.path.islink(full_path):
+                continue
             try:
                 size = os.path.getsize(full_path)
             except OSError:

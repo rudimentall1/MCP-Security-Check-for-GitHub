@@ -31,6 +31,23 @@ def _write_output(text: str, output_path: Optional[str]) -> None:
         sys.stdout.write(text if text.endswith("\n") else text + "\n")
 
 
+def _write_side_outputs(report: Report, *, sarif_output: Optional[str], markdown_output: Optional[str]) -> None:
+    """Write additional output formats derived from the SAME Report object.
+
+    This exists so a single CLI invocation (one engine run) can produce all
+    artifacts a caller needs (e.g. a GitHub Action wanting JSON for
+    decision/score extraction AND a SARIF file AND a PR Markdown comment)
+    without re-running the scan/diff multiple times, which could otherwise
+    let each output drift out of sync with the others.
+    """
+    if sarif_output:
+        with open(sarif_output, "w", encoding="utf-8") as fh:
+            json.dump(render_sarif(report), fh, indent=2)
+    if markdown_output:
+        with open(markdown_output, "w", encoding="utf-8") as fh:
+            fh.write(render_markdown(report))
+
+
 def _render(report: Report, fmt: str) -> str:
     if fmt == "json":
         return json.dumps(report.to_dict(), indent=2)
@@ -78,6 +95,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
     report = _apply_fail_on(report, args.fail_on)
     text = _render(report, args.format)
     _write_output(text, args.output)
+    _write_side_outputs(report, sarif_output=args.sarif_output, markdown_output=args.markdown_output)
 
     if args.verbose:
         sys.stderr.write(f"scanned {len(report.scanned_files)} file(s), {len(report.components)} component(s)\n")
@@ -95,6 +113,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
     report = _apply_fail_on(report, args.fail_on)
     text = _render(report, args.format)
     _write_output(text, args.output)
+    _write_side_outputs(report, sarif_output=args.sarif_output, markdown_output=args.markdown_output)
     return report.decision.exit_code
 
 
@@ -107,6 +126,8 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.add_argument("--config", default=None, help="Path to a policy YAML file.")
     scan_parser.add_argument("--format", choices=["terminal", "json", "sarif", "markdown"], default="terminal")
     scan_parser.add_argument("--output", default=None, help="Write output to this file instead of stdout.")
+    scan_parser.add_argument("--sarif-output", default=None, help="Additionally write a SARIF report for this same analysis run to this path.")
+    scan_parser.add_argument("--markdown-output", default=None, help="Additionally write a Markdown (PR-friendly) report for this same analysis run to this path.")
     scan_parser.add_argument("--fail-on", default=None, choices=["critical", "high", "medium", "low", "info"], help="Force BLOCK if any finding at or above this severity is present.")
     scan_parser.add_argument("--file", action="append", default=[], help="Explicit config file path to include (repeatable).")
     scan_parser.add_argument("--verbose", action="store_true")
@@ -118,6 +139,8 @@ def build_parser() -> argparse.ArgumentParser:
     diff_parser.add_argument("--config", default=None, help="Path to a policy YAML file.")
     diff_parser.add_argument("--format", choices=["terminal", "json", "sarif", "markdown"], default="terminal")
     diff_parser.add_argument("--output", default=None, help="Write output to this file instead of stdout.")
+    diff_parser.add_argument("--sarif-output", default=None, help="Additionally write a SARIF report for this same analysis run to this path.")
+    diff_parser.add_argument("--markdown-output", default=None, help="Additionally write a Markdown (PR-friendly) report for this same analysis run to this path.")
     diff_parser.add_argument("--fail-on", default=None, choices=["critical", "high", "medium", "low", "info"])
     diff_parser.set_defaults(func=cmd_diff)
 

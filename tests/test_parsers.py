@@ -1,5 +1,6 @@
 from mcp_security.parsers.json_parser import parse_json_file
 from mcp_security.parsers.yaml_parser import parse_yaml_file
+import json
 
 
 def test_parse_json_file_extracts_server_from_mcpServers():
@@ -96,3 +97,43 @@ def test_parse_yaml_file_does_not_use_unsafe_constructors():
     components, errors = parse_yaml_file(content, "mcp.yaml")
     assert components == []
     assert len(errors) == 1
+
+
+def test_parse_yaml_file_supports_anchors_and_aliases():
+    content = """
+    common: &common
+      publisher: Acme
+      version: "1.0.0"
+    mcpServers:
+      srv:
+        <<: *common
+        command: srv-bin
+    """
+    components, errors = parse_yaml_file(content, "mcp.yaml")
+    assert errors == []
+    assert len(components) == 1
+    assert components[0].metadata["publisher"] == "Acme"
+
+
+def test_parse_json_file_handles_null_and_unexpected_field_types():
+    content = json.dumps(
+        {
+            "mcpServers": {
+                "srv": {
+                    "command": "srv-bin",
+                    "args": None,
+                    "env": None,
+                    "tools": "not-a-list",
+                    "permissions": 42,
+                }
+            }
+        }
+    )
+    components, errors = parse_json_file(content, "mcp.json")
+    assert errors == []
+    assert len(components) == 1
+    # Wrong-typed fields are normalized to safe empty defaults, not crashes.
+    assert components[0].raw["args"] == []
+    assert components[0].raw["env"] == {}
+    assert components[0].raw["tools"] == []
+    assert components[0].raw["permissions"] is None

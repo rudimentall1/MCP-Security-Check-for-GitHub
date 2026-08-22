@@ -2,6 +2,9 @@ name: MCP Security
 
 on:
   pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,12 +14,17 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR (head)
+      # For pull_request events we can diff BASE vs HEAD. For push/manual
+      # triggers there is no meaningful "base" to diff against, so we fall
+      # back to a single-tree scan (base-path left unset below) -- this is
+      # a real scan, not a fake diff.
+      - name: Checkout HEAD
         uses: actions/checkout@v4
         with:
           path: head
 
-      - name: Checkout base branch
+      - name: Checkout BASE (pull_request only)
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
@@ -27,7 +35,7 @@ jobs:
         uses: YOUR_ORG/MCP-Security-Check-for-GitHub@v1
         with:
           path: head
-          base-path: base
+          base-path: ${{ github.event_name == 'pull_request' && 'base' || '' }}
           fail-on: critical
 
       - name: Upload SARIF
@@ -37,7 +45,7 @@ jobs:
           sarif_file: ${{ steps.mcp_check.outputs.sarif-path }}
 
       - name: Post report as PR comment
-        if: always()
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -49,3 +57,4 @@ jobs:
               repo: context.repo.repo,
               body,
             });
+

@@ -7,7 +7,7 @@ from typing import List
 from mcp_security.analyzers.provenance import evaluate_provenance
 from mcp_security.model.component import Component
 from mcp_security.model.finding import Finding, Severity
-from mcp_security.rules.base import Rule
+from mcp_security.rules.base import Rule, unique_capabilities_by_id
 
 # "curl ... | sh"-style patterns: fetch a script and pipe straight into an
 # interpreter. This is a much stronger signal than shell.execute alone.
@@ -65,7 +65,7 @@ class DynamicCodeExecutionRule(Rule):
 
     def evaluate(self, component: Component) -> List[Finding]:
         findings: List[Finding] = []
-        for cap in component.capabilities:
+        for cap in unique_capabilities_by_id(component):
             if cap.id == "code.execute":
                 findings.append(
                     Finding(

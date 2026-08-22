@@ -24,3 +24,14 @@ mcp-security-check = "mcp_security.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+# src-layout fix: pytest's rootdir-based sys.path insertion does not see
+# packages under src/ unless the package is installed (editable or not).
+# The native `pythonpath` ini option (pytest >= 7.0, no plugin required)
+# adds src/ to sys.path for test collection, so `pytest` works right after
+# `git clone` without requiring `pip install -e .` first. Installing the
+# package is still recommended for normal use (see README), but tests no
+# longer *require* it.
+pythonpath = ["src"]
+testpaths = ["tests"]

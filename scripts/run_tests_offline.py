@@ -17,7 +17,9 @@ import sys
 import tempfile
 import traceback
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(_REPO_ROOT, "src"))
+sys.path.insert(0, _REPO_ROOT)
 
 
 class _CapsysResult:
@@ -120,6 +122,7 @@ def main():
         "tests.test_scoring",
         "tests.test_outputs",
         "tests.test_cli",
+        "tests.test_audit_regressions",
     ]
     total_passed = 0
     total_failed = 0

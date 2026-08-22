@@ -4,7 +4,7 @@ from typing import List
 
 from mcp_security.model.component import Component
 from mcp_security.model.finding import Finding, Severity
-from mcp_security.rules.base import Rule
+from mcp_security.rules.base import Rule, unique_capabilities_by_id
 
 
 class UnrestrictedFilesystemWriteRule(Rule):
@@ -21,7 +21,7 @@ class UnrestrictedFilesystemWriteRule(Rule):
 
     def evaluate(self, component: Component) -> List[Finding]:
         findings: List[Finding] = []
-        for cap in component.capabilities:
+        for cap in unique_capabilities_by_id(component):
             if cap.id == "filesystem.write":
                 findings.append(
                     Finding(

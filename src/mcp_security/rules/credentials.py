@@ -5,7 +5,7 @@ from typing import List
 from mcp_security.analyzers.secrets import find_hardcoded_secret_like_values
 from mcp_security.model.component import Component
 from mcp_security.model.finding import Finding, Severity
-from mcp_security.rules.base import Rule
+from mcp_security.rules.base import Rule, unique_capabilities_by_id
 
 
 class SecretAccessRule(Rule):
@@ -22,7 +22,7 @@ class SecretAccessRule(Rule):
 
     def evaluate(self, component: Component) -> List[Finding]:
         findings: List[Finding] = []
-        for cap in component.capabilities:
+        for cap in unique_capabilities_by_id(component):
             if cap.id == "secrets.read":
                 findings.append(
                     Finding(
@@ -57,7 +57,7 @@ class CredentialFileAccessRule(Rule):
 
     def evaluate(self, component: Component) -> List[Finding]:
         findings: List[Finding] = []
-        for cap in component.capabilities:
+        for cap in unique_capabilities_by_id(component):
             if cap.id == "credentials.read":
                 findings.append(
                     Finding(

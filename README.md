@@ -111,10 +111,19 @@ jobs:
 
 See [action.yml](action.yml) for all inputs/outputs and
 [examples/github-action.yml](examples/github-action.yml) for a complete
-workflow including SARIF upload and a PR comment.
+workflow including SARIF upload, a PR comment, and the `push`/manual-trigger
+fallback (the minimal example above assumes a `pull_request` trigger with
+both BASE and HEAD checked out).
 
-Inputs: `path`, `base-path` (optional, enables capability diff), `config`,
-`format`, `output-file`, `sarif-file`, `fail-on`.
+Inputs: `path`, `base-path` (optional — when set, runs a capability diff
+instead of a single-tree scan; see the comment in
+[action.yml](action.yml) on how BASE/HEAD are obtained and the documented
+fallback behavior for non-PR triggers), `config`, `format`, `fail-on`.
+
+Outputs: `decision`, `risk-score`, `report-path`, `sarif-path`. All four are
+produced by a **single** internal `mcp-security-check` invocation (scan or
+diff) so they can never disagree with each other — the Action never re-runs
+the analysis to compute outputs separately from the report it writes.
 
 ## 6. CLI usage
 
@@ -129,8 +138,11 @@ mcp-security-check scan . --config .mcp-security.yaml --fail-on high
 ```
 
 Options: `--config`, `--format {terminal,json,sarif,markdown}`, `--output`,
-`--fail-on {critical,high,medium,low,info}`, `--file` (repeatable, explicit
-config path), `--verbose`.
+`--sarif-output` / `--markdown-output` (write those formats to additional
+files from the *same* analysis run, alongside `--output`/`--format` —
+useful for producing JSON+SARIF+Markdown from one invocation, as the
+GitHub Action does), `--fail-on {critical,high,medium,low,info}`,
+`--file` (repeatable, explicit config path), `--verbose`.
 
 ### Exit codes
 
@@ -299,6 +311,8 @@ The scanner only reads and analyzes text-based configuration files. It never:
 - evaluates untrusted Python
 - uses unsafe deserialization (`yaml.safe_load` only, standard `json.loads`
   only)
+- follows symlinks during discovery (symlinked directories are not
+  descended into, and symlinked files are skipped rather than read)
 
 File discovery enforces a size limit (default 2 MiB) and skips
 VCS/dependency directories (`.git`, `node_modules`, `.venv`, ...) to avoid
@@ -325,6 +339,11 @@ security (the capability model already reserves `wallet.*`, `transaction.*`,
 pip install -e ".[dev]"
 pytest
 ```
+
+`pytest` works right after cloning, even without the `pip install -e .`
+step above (see `[tool.pytest.ini_options]` in `pyproject.toml`) — the
+install is still recommended so the `mcp-security-check` console script
+and normal `import mcp_security` work outside of tests.
 
 ## License
 
