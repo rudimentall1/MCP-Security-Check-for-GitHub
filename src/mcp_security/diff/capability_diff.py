@@ -31,17 +31,18 @@ MSC020 = "MSC020"
 
 
 def _capability_map(components: Iterable[Component]) -> Dict[str, Capability]:
-    """Flatten all components' capabilities into id -> Capability.
+    """Flatten all components' capabilities into (component_name, id) -> Capability.
 
-    When multiple components declare the same capability id, the first one
-    encountered wins for target-comparison purposes; this is a summary
-    view across the whole scanned scope, matching the CLI's ``diff``
-    semantics (BASE directory vs HEAD directory).
+    Component identity is preserved so that the same capability id declared
+    by different components does not collide. Target changes are detected
+    per-component rather than being lost when multiple components share
+    a capability id.
     """
     result: Dict[str, Capability] = {}
     for component in components:
         for cap in component.capabilities:
-            result.setdefault(cap.id, cap)
+            key = f"{component.name}::{cap.id}"
+            result[key] = cap
     return result
 
 
@@ -55,15 +56,17 @@ def diff_components(
     base_ids = set(base_caps.keys())
     head_ids = set(head_caps.keys())
 
-    added = sorted(head_ids - base_ids)
-    removed = sorted(base_ids - head_ids)
+    # Extract pure capability ids for the summary (preserving existing API)
+    added = sorted({head_caps[k].id for k in head_ids - base_ids})
+    removed = sorted({base_caps[k].id for k in base_ids - head_ids})
     unchanged_ids = sorted(base_ids & head_ids)
 
     unchanged: List[str] = []
     changed: List[Dict] = []
-    for cap_id in unchanged_ids:
-        before = base_caps[cap_id]
-        after = head_caps[cap_id]
+    for cap_key in unchanged_ids:
+        before = base_caps[cap_key]
+        after = head_caps[cap_key]
+        cap_id = before.id
         if before.target != after.target:
             changed.append(
                 {
@@ -84,6 +87,14 @@ def _diff_findings(added: List[str], changed: List[Dict], head_caps: Dict[str, C
     findings: List[Finding] = []
 
     for cap_id in added:
+        # Find the capability by id in head_caps
+        cap = None
+        for key, candidate in head_caps.items():
+            if candidate.id == cap_id:
+                cap = candidate
+                break
+        if cap is None:
+            continue
         if is_high_risk(cap_id):
             findings.append(
                 Finding(
@@ -92,13 +103,12 @@ def _diff_findings(added: List[str], changed: List[Dict], head_caps: Dict[str, C
                     severity=Severity.HIGH,
                     description=f"The pull request introduces a new high-risk capability: {cap_id}. This was not present in the base branch.",
                     evidence=f"added_capability={cap_id}",
-                    file=head_caps[cap_id].metadata.get("file", "") if head_caps[cap_id].metadata else "",
+                    file=cap.metadata.get("file", "") if cap.metadata else "",
                     capability=cap_id,
                     remediation="Review why this new capability is required before merging.",
                 )
             )
         if cap_id == "network.external":
-            cap = head_caps[cap_id]
             endpoint = cap.target or "unknown endpoint"
             findings.append(
                 Finding(

@@ -70,10 +70,11 @@ def scan(root: str, *, config_path: Optional[str] = None, explicit_paths: Option
     engine = build_default_engine()
     findings: List[Finding] = engine.run(result.components)
 
-    all_capability_ids = set()
+    attack_paths = []
     for component in result.components:
-        all_capability_ids.update(c.id for c in component.capabilities)
-    attack_paths = detect_attack_paths(all_capability_ids)
+        component_capability_ids = set(c.id for c in component.capabilities)
+        component_attack_paths = detect_attack_paths(component_capability_ids)
+        attack_paths.extend(component_attack_paths)
 
     findings = policy.apply_rule_overrides(findings)
     findings = policy.apply_allowlist(findings)
@@ -120,10 +121,11 @@ def scan_diff(
     all_findings = policy.apply_rule_overrides(all_findings)
     all_findings = policy.apply_allowlist(all_findings)
 
-    head_capability_ids = set()
+    attack_paths = []
     for component in head_result.components:
-        head_capability_ids.update(c.id for c in component.capabilities)
-    attack_paths = detect_attack_paths(head_capability_ids)
+        component_capability_ids = set(c.id for c in component.capabilities)
+        component_attack_paths = detect_attack_paths(component_capability_ids)
+        attack_paths.extend(component_attack_paths)
 
     escalation = has_new_high_risk_capability(all_findings)
     risk_score = compute_risk_score(all_findings, attack_paths, has_high_risk_escalation=escalation)

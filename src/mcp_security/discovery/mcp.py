@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from mcp_security.discovery.files import DiscoveredFile, iter_candidate_files
+from mcp_security.discovery.files import DEFAULT_MAX_FILE_SIZE_BYTES, DiscoveredFile, iter_candidate_files
 
 # Exact filenames (case-sensitive) that are recognized MCP configuration.
 KNOWN_MCP_FILENAMES = {
@@ -63,9 +63,14 @@ def discover_mcp_files(root: str, *, explicit_paths: Optional[List[str]] = None)
         for p in explicit_paths:
             abs_path = p if os.path.isabs(p) else os.path.join(root, p)
             abs_path = os.path.abspath(abs_path)
+            # Skip symlinks - they may point outside the scanned tree
+            if os.path.islink(abs_path):
+                continue
             if abs_path in matched_paths or not os.path.isfile(abs_path):
                 continue
             size = os.path.getsize(abs_path)
+            if size > DEFAULT_MAX_FILE_SIZE_BYTES:
+                continue
             matched.append(
                 DiscoveredFile(
                     path=abs_path,
