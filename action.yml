@@ -4,127 +4,168 @@ author: "MCP Security Check Contributors"
 
 branding:
   icon: "shield"
-  color: "red"
-
-# ---------------------------------------------------------------------------
-# base-path / diff mode
-#
-# This Action does NOT infer BASE/HEAD itself (e.g. via `git diff HEAD~1`),
-# since that is not equivalent to a pull request's actual base/head and
-# would silently produce a misleading diff on non-PR triggers. Instead the
-# workflow author explicitly checks out both trees (see
-# examples/github-action.yml, which uses `github.event.pull_request.base.sha`
-# for pull_request events) and passes both paths in.
-#
-# If `base-path` is empty, this Action falls back to a single-tree scan of
-# `path` (no capability-diff findings: MSC015/MSC018/MSC020, no escalation
-# comparison). This is the documented, non-diff behavior for `push` or
-# manually triggered runs where there is no meaningful base to compare
-# against -- it is a real scan, not a fake/empty diff.
-# ---------------------------------------------------------------------------
+  color: "purple"
 
 inputs:
   path:
     description: "Directory to scan (HEAD checkout). Defaults to the workflow workspace."
     required: false
     default: "."
+
   base-path:
-    description: >
-      Optional directory containing the BASE branch checkout. When set, runs
-      a capability diff (BASE vs HEAD) instead of a single-tree scan. When
-      omitted, runs a single-tree scan of `path` (documented fallback, not a
-      fake diff -- see comment above).
+    description: "Optional directory containing the BASE branch checkout. When set, runs a capability diff (BASE vs HEAD)."
     required: false
     default: ""
+
   config:
-    description: "Path to a policy YAML file (see rules/default.yaml)."
+    description: "Path to a policy YAML file."
     required: false
     default: ""
+
   format:
-    description: "Primary report format written to output-file: markdown | json | sarif | terminal."
+    description: "Primary report format: markdown | json | sarif | terminal."
     required: false
     default: "markdown"
+
   fail-on:
-    description: "Severity threshold (critical|high|medium|low|info) that forces the decision to BLOCK."
+    description: "Severity threshold: critical|high|medium|low|info."
     required: false
-    default: "critical"
+    default: "high"
 
 outputs:
   decision:
-    description: "ALLOW, WARN, or BLOCK -- from the single analysis run below."
+    description: "ALLOW, WARN, or BLOCK from the authoritative analysis run."
+    value: ${{ steps.run_check.outputs.decision }}
+
   risk-score:
-    description: "Risk score from 0 to 100 -- from the same analysis run as 'decision'."
+    description: "Risk score from 0 to 100."
+    value: ${{ steps.run_check.outputs.risk-score }}
+
   report-path:
-    description: "Path to the generated report file (format: mcp-security-report.<format>)."
+    description: "Path to the primary generated report."
+    value: ${{ steps.run_check.outputs.report-path }}
+
   sarif-path:
-    description: "Path to the generated SARIF file (mcp-security-results.sarif), for code scanning upload."
+    description: "Path to the generated SARIF report."
+    value: ${{ steps.run_check.outputs.sarif-path }}
 
 runs:
   using: "composite"
+
   steps:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
 
-    - name: Install mcp-security-check
+    - name: Install MCP Security Check
       shell: bash
-      run: pip install "${{ github.action_path }}"
+      run: |
+        set -euo pipefail
+        python -m pip install "${{ github.action_path }}"
 
-    # ------------------------------------------------------------------
-    # Single authoritative analysis run.
+    # -----------------------------------------------------------------------
+    # ONE authoritative security analysis.
     #
-    # Exactly ONE `mcp-security-check` invocation runs the full pipeline
-    # (scan, or diff when base-path is set) and writes JSON + SARIF +
-    # Markdown from that ONE resulting Report object. decision/risk-score
-    # outputs are read back from that same JSON file, so they can never
-    # disagree with the SARIF/Markdown/exit-code produced by this step.
-    # No second scan is run anywhere in this Action.
-    # ------------------------------------------------------------------
+    # The scanner generates:
+    #   mcp-security-report.json
+    #   mcp-security-report.md
+    #   mcp-security-results.sarif
+    #
+    # IMPORTANT:
+    # scanner exit codes are deliberately captured with set +e.
+    # Otherwise bash -e can terminate the composite action before $? is read.
+    # -----------------------------------------------------------------------
     - name: Run MCP Security Check
       id: run_check
       shell: bash
       run: |
-        set +e
+        set -euo pipefail
 
         JSON_FILE="mcp-security-report.json"
         SARIF_FILE="mcp-security-results.sarif"
         MD_FILE="mcp-security-report.md"
 
         CONFIG_ARGS=()
+
         if [ -n "${{ inputs.config }}" ]; then
           CONFIG_ARGS=(--config "${{ inputs.config }}")
         fi
 
-        if [ -n "${{ inputs.base-path }}" ]; then
-          mcp-security-check diff "${{ inputs.base-path }}" "${{ inputs.path }}" \
-            --format json --output "$JSON_FILE" \
-            --sarif-output "$SARIF_FILE" \
-            --markdown-output "$MD_FILE" \
-            --fail-on "${{ inputs.fail-on }}" \
-            "${CONFIG_ARGS[@]}"
-        else
-          mcp-security-check scan "${{ inputs.path }}" \
-            --format json --output "$JSON_FILE" \
-            --sarif-output "$SARIF_FILE" \
-            --markdown-output "$MD_FILE" \
-            --fail-on "${{ inputs.fail-on }}" \
-            "${CONFIG_ARGS[@]}"
-        fi
-        exit_code=$?
+        exit_code=0
 
+        if [ -n "${{ inputs.base-path }}" ]; then
+          echo "Running capability diff:"
+          echo "  BASE: ${{ inputs.base-path }}"
+          echo "  HEAD: ${{ inputs.path }}"
+
+          set +e
+
+          mcp-security-check diff \
+            "${{ inputs.base-path }}" \
+            "${{ inputs.path }}" \
+            --format json \
+            --output "$JSON_FILE" \
+            --sarif-output "$SARIF_FILE" \
+            --markdown-output "$MD_FILE" \
+            --fail-on "${{ inputs.fail-on }}" \
+            "${CONFIG_ARGS[@]}"
+
+          exit_code=$?
+
+          set -e
+        else
+          echo "Running single-tree scan:"
+          echo "  PATH: ${{ inputs.path }}"
+
+          set +e
+
+          mcp-security-check scan \
+            "${{ inputs.path }}" \
+            --format json \
+            --output "$JSON_FILE" \
+            --sarif-output "$SARIF_FILE" \
+            --markdown-output "$MD_FILE" \
+            --fail-on "${{ inputs.fail-on }}" \
+            "${CONFIG_ARGS[@]}"
+
+          exit_code=$?
+
+          set -e
+        fi
+
+        echo "Scanner exit code: $exit_code"
+
+        # The scanner must always produce JSON.
         if [ ! -f "$JSON_FILE" ]; then
-          echo "MCP Security Check: analysis did not produce a report (exit code $exit_code); treating as a configuration error." >&2
+          echo "ERROR: MCP Security Check did not produce $JSON_FILE" >&2
           echo "exit_code=3" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
-        DECISION=$(python3 -c "import json;print(json.load(open('$JSON_FILE'))['decision'])")
-        SCORE=$(python3 -c "import json;print(json.load(open('$JSON_FILE'))['risk_score'])")
+        # Read decision and risk score from the exact JSON report generated
+        # by this same scanner invocation.
+        DECISION=$(python3 -c "
+        import json
+        with open('$JSON_FILE', encoding='utf-8') as f:
+            data = json.load(f)
+        print(data['decision'])
+        ")
+
+        SCORE=$(python3 -c "
+        import json
+        with open('$JSON_FILE', encoding='utf-8') as f:
+            data = json.load(f)
+        print(data['risk_score'])
+        ")
 
         REPORT_PATH="$MD_FILE"
-        if [ "${{ inputs.format }}" = "json" ]; then REPORT_PATH="$JSON_FILE"; fi
-        if [ "${{ inputs.format }}" = "sarif" ]; then REPORT_PATH="$SARIF_FILE"; fi
+
+        if [ "${{ inputs.format }}" = "json" ]; then
+          REPORT_PATH="$JSON_FILE"
+        elif [ "${{ inputs.format }}" = "sarif" ]; then
+          REPORT_PATH="$SARIF_FILE"
+        fi
 
         echo "decision=$DECISION" >> "$GITHUB_OUTPUT"
         echo "risk-score=$SCORE" >> "$GITHUB_OUTPUT"
@@ -132,16 +173,44 @@ runs:
         echo "sarif-path=$SARIF_FILE" >> "$GITHUB_OUTPUT"
         echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
 
+        echo "Decision: $DECISION"
+        echo "Risk score: $SCORE"
+        echo "Report: $REPORT_PATH"
+        echo "SARIF: $SARIF_FILE"
+
+    # -----------------------------------------------------------------------
+    # BLOCK and scanner/configuration errors fail the workflow.
+    # WARN intentionally remains green.
+    # -----------------------------------------------------------------------
     - name: Fail workflow according to policy
       shell: bash
       run: |
-        # Exit code semantics (see README): 0=ALLOW 1=WARN 2=BLOCK 3=error.
-        # Only BLOCK/error fail the workflow -- WARN stays green so ordinary
-        # warnings do not accidentally break CI; it is still visible via the
-        # decision/risk-score outputs and the PR report/SARIF.
+        set -euo pipefail
+
         code="${{ steps.run_check.outputs.exit_code }}"
-        if [ "$code" = "2" ] || [ "$code" = "3" ]; then
-          echo "MCP Security Check: decision=${{ steps.run_check.outputs.decision }} (exit code $code) -- failing workflow."
-          exit 1
-        fi
-        echo "MCP Security Check: decision=${{ steps.run_check.outputs.decision }} (exit code $code) -- not blocking."
+        decision="${{ steps.run_check.outputs.decision }}"
+
+        echo "MCP Security Check"
+        echo "Decision: $decision"
+        echo "Exit code: $code"
+
+        case "$code" in
+          0)
+            echo "ALLOW -> workflow continues."
+            ;;
+          1)
+            echo "WARN -> workflow continues."
+            ;;
+          2)
+            echo "BLOCK -> failing workflow."
+            exit 1
+            ;;
+          3)
+            echo "ERROR -> failing workflow."
+            exit 1
+            ;;
+          *)
+            echo "Unknown scanner exit code: $code"
+            exit 1
+            ;;
+        esac
