@@ -118,6 +118,7 @@ jobs:
         with:
           path: fixture
           format: json
+          fail-on: critical
 
       - name: Assert WARN
         shell: bash
