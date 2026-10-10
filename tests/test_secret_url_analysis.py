@@ -70,3 +70,11 @@ def test_multiple_credentials_are_reported_independently():
         "url.query.api_key",
         "url.query.access_token",
     ]
+
+
+def test_malformed_url_does_not_crash_or_emit_partial_credentials():
+    # urlsplit raises ValueError for malformed bracketed hosts; the analyzer
+    # must fail safely and let schema validation report the invalid URL.
+    assert find_hardcoded_url_credentials(
+        "https://[invalid-host?api_key=sampleSecret123"
+    ) == []
