@@ -68,6 +68,7 @@ def _validate_server_definition(
         ("args", list, True),
         ("env", dict, True),
         ("tools", list, True),
+        ("headers", dict, True),
     ):
         value = server_def.get(field)
         if value is None and allow_null:
@@ -148,10 +149,12 @@ def _normalize_document(data: Dict[str, Any], relative_path: str) -> List[Compon
 
 def _build_server_component(name: str, server_def: Dict[str, Any], relative_path: str) -> Component:
     normalized = {
+        "type": server_def.get("type"),
         "command": server_def.get("command"),
         "args": server_def.get("args") if isinstance(server_def.get("args"), list) else [],
         "env": server_def.get("env") if isinstance(server_def.get("env"), dict) else {},
         "url": server_def.get("url"),
+        "headers": server_def.get("headers") if isinstance(server_def.get("headers"), dict) else {},
         "tools": server_def.get("tools") if isinstance(server_def.get("tools"), list) else [],
         "permissions": server_def.get("permissions")
         if isinstance(server_def.get("permissions"), (list, dict))

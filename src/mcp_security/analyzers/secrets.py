@@ -29,10 +29,22 @@ def find_hardcoded_secret_like_values(env: Dict) -> List[Tuple[str, str]]:
     for key, value in env.items():
         if not isinstance(value, str):
             continue
-        if value.startswith("${") or value.startswith("$"):
-            continue  # references an external variable, not a literal
+        # Configs commonly use ${input:...}, ${env:...}, or ${TOKEN} as
+        # runtime references. Do not flag those as committed credentials,
+        # including when a value has an HTTP auth scheme prefix.
+        if value.startswith("$") or "${" in value:
+            continue
         if value.lower() in ("changeme", "example", "placeholder", "todo"):
             continue
-        if _TOKEN_PATTERN.match(value):
+
+        candidate = value.strip()
+        # Remote MCP configs often place a token in "Authorization: Bearer ...".
+        # Inspect the token portion but keep the original value for redaction length.
+        parts = candidate.split(None, 1)
+        if len(parts) == 2 and parts[0].lower() in ("bearer", "basic"):
+            candidate = parts[1].strip()
+        if candidate.lower() in ("changeme", "example", "placeholder", "todo"):
+            continue
+        if _TOKEN_PATTERN.fullmatch(candidate):
             findings.append((str(key), value))
     return findings

@@ -109,4 +109,24 @@ class HardcodedSecretRule(Rule):
                     remediation="Move the secret to a proper secret store / CI secret and reference it, do not hardcode it in configuration.",
                 )
             )
+
+        headers = raw.get("headers") or {}
+        for key, value in find_hardcoded_secret_like_values(headers):
+            findings.append(
+                Finding(
+                    rule_id=self.rule_id,
+                    title=self.title,
+                    severity=Severity.MEDIUM,
+                    description=(
+                        f"The HTTP header '{key}' has a literal value that looks like a hardcoded "
+                        "credential. Remote MCP configurations commonly use headers for authentication; "
+                        "keep tokens in a secret store or input variable rather than committing them."
+                    ),
+                    evidence=f"headers.{key}=<redacted, {len(value)} chars>",
+                    file=component.file,
+                    component=component.name,
+                    confidence="low",
+                    remediation="Replace the literal header credential with a supported secret/input reference and rotate it if it was committed.",
+                )
+            )
         return findings

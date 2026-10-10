@@ -196,3 +196,51 @@ def test_attack_paths_deterministic_across_repeated_calls():
     first = detect_attack_paths(caps)
     second = detect_attack_paths(caps)
     assert [p.path_id for p in first] == [p.path_id for p in second]
+
+
+
+def test_hardcoded_remote_http_header_credential_is_detected_and_redacted(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    secret = "TEST_SAMPLE_CREDENTIAL_abcdef0123456789abcdef0123456789"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": "https://api.example.com/mcp",
+                    "headers": {"Authorization": f"Bearer {secret}"},
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report = json.loads(capsys.readouterr().out)
+    literal_findings = [f for f in report["findings"] if f["rule_id"] == "MSC002-LITERAL"]
+    assert any(f["evidence"].startswith("headers.Authorization=<redacted") for f in literal_findings)
+    assert secret not in json.dumps(report)
+
+
+def test_remote_http_header_reference_is_not_reported_as_hardcoded_secret(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": "https://api.example.com/mcp",
+                    "headers": {"Authorization": "Bearer ${input:accessToken}"},
+                }
+            },
+            "inputs": [{"id": "accessToken", "type": "promptString", "password": True}],
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report = json.loads(capsys.readouterr().out)
+    assert not any(
+        f["rule_id"] == "MSC002-LITERAL" and f["evidence"].startswith("headers.")
+        for f in report["findings"]
+    )

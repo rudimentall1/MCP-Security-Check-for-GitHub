@@ -199,3 +199,32 @@ def test_yaml_server_definition_without_command_or_url_returns_error():
     )
     assert len(components) == 1
     assert any("must define a non-empty string 'command' or 'url'" in e for e in errors)
+
+
+
+def test_parse_vscode_servers_format_and_preserve_http_headers():
+    content = json.dumps({
+        "servers": {
+            "docs": {
+                "type": "http",
+                "url": "https://modelcontextprotocol.io/mcp",
+                "headers": {"Authorization": "Bearer ${input:accessToken}"},
+            }
+        },
+        "inputs": [{"id": "accessToken", "type": "promptString", "password": True}],
+    })
+    components, errors = parse_json_file(content, ".vscode/mcp.json")
+    assert errors == []
+    assert len(components) == 1
+    assert components[0].name == "docs"
+    assert components[0].raw["type"] == "http"
+    assert components[0].raw["headers"] == {"Authorization": "Bearer ${input:accessToken}"}
+
+
+def test_parse_json_file_non_mapping_headers_returns_error():
+    components, errors = parse_json_file(
+        '{"mcpServers":{"docs":{"type":"http","url":"https://example.com","headers":["Bearer token"]}}}',
+        ".mcp.json",
+    )
+    assert len(components) == 1
+    assert any("field 'headers' must be a dict" in e for e in errors)
