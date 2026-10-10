@@ -98,3 +98,24 @@ def test_capabilities_are_deduplicated():
     shell_caps = [c for c in caps if c.id == "shell.execute"]
     # Same id + same target (local) should be deduplicated to one entry.
     assert len(shell_caps) == 1
+
+def test_localhost_subdomain_attacker_host_is_external():
+    component = make_component({"command": None, "url": "https://localhost.attacker.example/mcp"})
+    ids = {c.id for c in extract_capabilities(component)}
+    assert "network.external" in ids
+    assert "network.local" not in ids
+
+
+def test_loopback_looking_prefix_is_not_treated_as_loopback_ip():
+    component = make_component({"command": None, "url": "https://127.0.0.1.attacker.example/mcp"})
+    ids = {c.id for c in extract_capabilities(component)}
+    assert "network.external" in ids
+    assert "network.local" not in ids
+
+
+def test_ipv6_loopback_url_yields_network_local():
+    component = make_component({"command": None, "url": "http://[::1]:9000/mcp"})
+    ids = {c.id for c in extract_capabilities(component)}
+    assert "network.local" in ids
+    assert "network.external" not in ids
+
