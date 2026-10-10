@@ -12,8 +12,10 @@ into a capability. It must never be treated as automatically dangerous.
 
 from __future__ import annotations
 
+import ipaddress
 import re
 from typing import Dict, List
+from urllib.parse import urlsplit
 
 from mcp_security.model.capability import Capability
 from mcp_security.model.component import Component
@@ -131,11 +133,26 @@ def _from_url(raw: Dict) -> List[Capability]:
     url = raw.get("url")
     if not isinstance(url, str) or not url:
         return []
-    if url.startswith("http://") or url.startswith("https://"):
-        if "localhost" in url or "127.0.0.1" in url:
-            return [Capability("network", "local", target=url)]
-        return [Capability("network", "external", target=url)]
-    return []
+    if not url.lower().startswith(("http://", "https://")):
+        return []
+
+    # Classify by the parsed hostname, never by substring: an attacker-controlled
+    # host such as localhost.attacker.example must remain external.
+    try:
+        hostname = urlsplit(url).hostname
+    except ValueError:
+        hostname = None
+    normalized_host = (hostname or "").rstrip(".").lower()
+    is_local = normalized_host == "localhost" or normalized_host.endswith(".localhost")
+    if not is_local and normalized_host:
+        try:
+            is_local = ipaddress.ip_address(normalized_host).is_loopback
+        except ValueError:
+            pass
+
+    if is_local:
+        return [Capability("network", "local", target=url)]
+    return [Capability("network", "external", target=url)]
 
 
 def _from_env(raw: Dict) -> List[Capability]:
