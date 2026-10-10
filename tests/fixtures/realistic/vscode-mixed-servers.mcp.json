@@ -1,0 +1,27 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "api-token",
+      "description": "Remote MCP API token",
+      "password": true
+    }
+  ],
+  "servers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp"
+    },
+    "docs": {
+      "type": "http",
+      "url": "https://modelcontextprotocol.io/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:api-token}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@microsoft/mcp-server-playwright"]
+    }
+  }
+}
