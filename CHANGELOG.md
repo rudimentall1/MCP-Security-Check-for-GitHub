@@ -14,6 +14,7 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 - BASE-versus-HEAD capability diff for newly introduced or changed permissions.
 - CLI output in terminal, JSON, Markdown, and SARIF 2.1.0 formats.
 - GitHub composite Action with one authoritative scan for all report formats.
+- Package-build validation for source/wheel distributions plus clean-environment CLI smoke test.
 - Automated Action scenarios for allow, warn, block, capability escalation,
   malformed input, non-execution of dangerous-looking commands, and invalid inputs.
 - Python support is limited to maintained interpreter versions, with CI on 3.11–3.14.
