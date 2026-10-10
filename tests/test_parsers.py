@@ -131,9 +131,12 @@ def test_parse_json_file_handles_null_and_unexpected_field_types():
         }
     )
     components, errors = parse_json_file(content, "mcp.json")
-    assert errors == []
+    assert len(errors) == 2
+    assert any("field 'tools' must be a list" in e for e in errors)
+    assert any("field 'permissions' must be a list or mapping" in e for e in errors)
     assert len(components) == 1
-    # Wrong-typed fields are normalized to safe empty defaults, not crashes.
+    # Null optional args/env are normalized to empty defaults; invalid declared
+    # tools/permissions types are also reported so the scan cannot look clean.
     assert components[0].raw["args"] == []
     assert components[0].raw["env"] == {}
     assert components[0].raw["tools"] == []
@@ -169,3 +172,30 @@ def test_parse_yaml_file_without_recognizable_server_structure_returns_error():
     components, errors = parse_yaml_file("settings: {}", "mcp.yaml")
     assert components == []
     assert any("no recognizable MCP server definition" in e for e in errors)
+
+
+
+def test_json_server_definition_without_command_or_url_returns_error():
+    components, errors = parse_json_file(
+        '{"mcpServers": {"srv": {"tools": ["run_shell"]}}}', "mcp.json"
+    )
+    assert len(components) == 1
+    assert any("must define a non-empty string 'command' or 'url'" in e for e in errors)
+
+
+def test_json_non_string_command_returns_error():
+    components, errors = parse_json_file(
+        '{"mcpServers": {"srv": {"command": ["bash"]}}}', "mcp.json"
+    )
+    assert len(components) == 1
+    assert any("field 'command' must be a string" in e for e in errors)
+
+
+def test_yaml_server_definition_without_command_or_url_returns_error():
+    from mcp_security.parsers.yaml_parser import parse_yaml_file
+
+    components, errors = parse_yaml_file(
+        "mcpServers:\n  srv:\n    tools: [run_shell]\n", "mcp.yaml"
+    )
+    assert len(components) == 1
+    assert any("must define a non-empty string 'command' or 'url'" in e for e in errors)

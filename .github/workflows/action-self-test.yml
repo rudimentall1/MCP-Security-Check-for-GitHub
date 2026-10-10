@@ -448,6 +448,35 @@ jobs:
           print("OK: structurally invalid MCP config was not treated as ALLOW")
           PY
 
+      - name: Write server definition without a transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\\n' '{"mcpServers":{"srv":{"tools":["run_shell"]}}}' > fixture/mcp.json
+
+      - name: Run missing transport case
+        id: no_transport
+        continue-on-error: true
+        uses: ./
+        with:
+          path: fixture
+          format: json
+
+      - name: Assert missing transport fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.no_transport.outputs.decision }}" = "BLOCK"
+          test "${{ steps.no_transport.outcome }}" = "failure"
+          python3 - <<'PY'
+          import json
+          with open("mcp-security-report.json", encoding="utf-8") as f:
+              report = json.load(f)
+          assert report["decision"] == "BLOCK", report
+          assert any("command' or 'url" in err for err in report["errors"]), report["errors"]
+          print("OK: server without a recognized transport fails closed")
+          PY
+
 
   # ==========================================================================
   # F — DANGEROUS COMMAND MUST NEVER EXECUTE

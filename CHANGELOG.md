@@ -27,6 +27,8 @@ Notable changes to MCP Security Check for GitHub are recorded here.
   them into shell source, preventing shell-looking paths from becoming commands.
 - Fail closed when a discovered MCP config cannot be read, parsed, or normalized
   to a recognizable server structure.
+- Validate MCP server transport fields and the types of declared tools, args,
+  environment, and permissions so malformed data cannot disappear into defaults.
 - Fail with an error for a missing scan root, explicitly requested file, or policy file.
 - Reject empty or non-mapping policy YAML instead of silently selecting defaults.
 - Reject automatic or explicitly requested MCP config paths that are symlinked

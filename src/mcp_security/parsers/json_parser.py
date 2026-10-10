@@ -39,6 +39,55 @@ def parse_json_file(content: str, relative_path: str) -> Tuple[List[Component], 
     return components, errors
 
 
+def _validate_server_definition(
+    server_def: Dict[str, Any], name: str, relative_path: str
+) -> List[str]:
+    """Validate fields whose malformed types could hide security-relevant data."""
+    errors: List[str] = []
+    command = server_def.get("command")
+    url = server_def.get("url")
+
+    if command is not None and not isinstance(command, str):
+        errors.append(
+            f"{relative_path}: MCP server '{name}' field 'command' must be a string"
+        )
+    if url is not None and not isinstance(url, str):
+        errors.append(
+            f"{relative_path}: MCP server '{name}' field 'url' must be a string"
+        )
+
+    has_command = isinstance(command, str) and bool(command.strip())
+    has_url = isinstance(url, str) and bool(url.strip())
+    if not has_command and not has_url:
+        errors.append(
+            f"{relative_path}: MCP server '{name}' must define a non-empty "
+            "string 'command' or 'url'"
+        )
+
+    for field, expected, allow_null in (
+        ("args", list, True),
+        ("env", dict, True),
+        ("tools", list, True),
+    ):
+        value = server_def.get(field)
+        if value is None and allow_null:
+            continue
+        if not isinstance(value, expected):
+            errors.append(
+                f"{relative_path}: MCP server '{name}' field '{field}' "
+                f"must be a {expected.__name__}"
+            )
+
+    permissions = server_def.get("permissions")
+    if permissions is not None and not isinstance(permissions, (list, dict)):
+        errors.append(
+            f"{relative_path}: MCP server '{name}' field 'permissions' "
+            "must be a list or mapping"
+        )
+
+    return errors
+
+
 def _validate_document_structure(data: Dict[str, Any], relative_path: str) -> List[str]:
     """Report recognized MCP config documents that cannot be normalized safely."""
     errors: List[str] = []
@@ -59,11 +108,14 @@ def _validate_document_structure(data: Dict[str, Any], relative_path: str) -> Li
                         f"{relative_path}: MCP server '{name}' under '{key}' "
                         "must be an object/mapping"
                     )
+                    continue
+                errors.extend(_validate_server_definition(server_def, str(name), relative_path))
         return errors
 
     # A direct, single-server document is also a supported shape.
-    if any(k in data for k in ("command", "url", "args", "tools", "permissions")):
-        return errors
+    if any(k in data for k in ("command", "url", "args", "env", "tools", "permissions")):
+        direct_name = str(data.get("name") or _infer_name_from_path(relative_path))
+        return _validate_server_definition(data, direct_name, relative_path)
 
     errors.append(
         f"{relative_path}: no recognizable MCP server definition or server "
