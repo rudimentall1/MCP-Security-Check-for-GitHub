@@ -102,12 +102,15 @@ jobs:
 
       - name: MCP Security Check
         id: mcp_check
-        uses: YOUR_ORG/MCP-Security-Check-for-GitHub@v1
+        uses: rudimentall1/MCP-Security-Check-for-GitHub@e1c91aae78e08c10cd73e4c1baa0b49ec9603b6b
         with:
           path: head
           base-path: base
           fail-on: critical
 ```
+
+This quick start pins a reviewed commit SHA rather than an unpublished version tag.
+Update that SHA deliberately after reviewing a newer commit.
 
 See [action.yml](action.yml) for all inputs/outputs and
 [examples/github-action.yml](examples/github-action.yml) for a complete
