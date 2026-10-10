@@ -419,6 +419,35 @@ jobs:
           )
           PY
 
+      - name: Write structurally invalid config
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\\n' '{"mcpServers":[]}' > fixture/mcp.json
+
+      - name: Run structural validation case
+        id: bad_schema
+        continue-on-error: true
+        uses: ./
+        with:
+          path: fixture
+          format: json
+
+      - name: Assert invalid MCP schema fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.bad_schema.outputs.decision }}" = "BLOCK"
+          test "${{ steps.bad_schema.outcome }}" = "failure"
+          python3 - <<'PY'
+          import json
+          with open("mcp-security-report.json", encoding="utf-8") as f:
+              report = json.load(f)
+          assert report["decision"] == "BLOCK", report
+          assert report["errors"], report
+          print("OK: structurally invalid MCP config was not treated as ALLOW")
+          PY
+
 
   # ==========================================================================
   # F — DANGEROUS COMMAND MUST NEVER EXECUTE

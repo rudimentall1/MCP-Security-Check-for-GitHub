@@ -12,7 +12,7 @@ from typing import List, Tuple
 import yaml
 
 from mcp_security.model.component import Component
-from mcp_security.parsers.json_parser import _normalize_document
+from mcp_security.parsers.json_parser import _normalize_document, _validate_document_structure
 
 
 def parse_yaml_file(content: str, relative_path: str) -> Tuple[List[Component], List[str]]:
@@ -30,11 +30,15 @@ def parse_yaml_file(content: str, relative_path: str) -> Tuple[List[Component], 
         return [], errors
 
     if data is None:
+        errors.append(
+            f"{relative_path}: empty YAML document; refusing to treat the config as clean"
+        )
         return [], errors
 
     if not isinstance(data, dict):
         errors.append(f"{relative_path}: expected a YAML mapping at the top level, skipping")
         return [], errors
 
+    errors.extend(_validate_document_structure(data, relative_path))
     components = _normalize_document(data, relative_path)
     return components, errors

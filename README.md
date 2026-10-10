@@ -287,8 +287,9 @@ Default decision logic (configurable via policy, see [§7](#7-configuration)):
 finding at or above that severity is present, independent of the policy
 file's own thresholds.
 
-If a discovered MCP configuration cannot be read or parsed, the report fails
-closed with **BLOCK** and the CLI returns exit code **3**. A missing scan root,
+If a discovered MCP configuration cannot be read, parsed, or normalized to a
+recognizable MCP server structure, the report fails closed with **BLOCK** and
+the CLI returns exit code **3**. A missing scan root,
 missing explicit `--file`, missing policy file, or invalid/empty policy YAML
 also returns exit code **3** instead of silently falling back to a clean scan
 or the default policy. These errors do not claim the configuration is

@@ -34,8 +34,42 @@ def parse_json_file(content: str, relative_path: str) -> Tuple[List[Component], 
         errors.append(f"{relative_path}: expected a JSON object at the top level, skipping")
         return [], errors
 
+    errors.extend(_validate_document_structure(data, relative_path))
     components = _normalize_document(data, relative_path)
     return components, errors
+
+
+def _validate_document_structure(data: Dict[str, Any], relative_path: str) -> List[str]:
+    """Report recognized MCP config documents that cannot be normalized safely."""
+    errors: List[str] = []
+    present_containers = [key for key in SERVER_CONTAINER_KEYS if key in data]
+
+    if present_containers:
+        for key in present_containers:
+            container = data[key]
+            if not isinstance(container, dict):
+                errors.append(
+                    f"{relative_path}: expected '{key}' to be an object/mapping; "
+                    "MCP server definitions could not be inspected"
+                )
+                continue
+            for name, server_def in container.items():
+                if not isinstance(server_def, dict):
+                    errors.append(
+                        f"{relative_path}: MCP server '{name}' under '{key}' "
+                        "must be an object/mapping"
+                    )
+        return errors
+
+    # A direct, single-server document is also a supported shape.
+    if any(k in data for k in ("command", "url", "args", "tools", "permissions")):
+        return errors
+
+    errors.append(
+        f"{relative_path}: no recognizable MCP server definition or server "
+        "container found; refusing to treat the config as clean"
+    )
+    return errors
 
 
 def _normalize_document(data: Dict[str, Any], relative_path: str) -> List[Component]:
