@@ -74,11 +74,30 @@ def _is_placeholder_or_reference(value: str) -> bool:
 
 
 def _is_sensitive_url_key(key: str) -> bool:
+    """Match credential-bearing parameter names without substring false positives."""
     normalized = re.sub(r"[^a-z0-9]", "", key.lower())
-    if any(marker in normalized for marker in _SENSITIVE_URL_KEY_MARKERS):
+
+    # Exact names cover generic fields; suffixes cover common namespaced forms
+    # such as github_token, client_secret, and X-Amz-Signature.
+    exact_names = {
+        "auth", "authkey", "key", "sig", "secret", "token", "password",
+        "passwd", "credential", "credentials", "authorization", "signature",
+    }
+    if normalized in exact_names:
         return True
-    # Keep short auth fields covered without matching unrelated words such as "author".
-    return normalized in {"auth", "xauth", "authkey"}
+
+    sensitive_suffixes = (
+        "accesstoken", "refreshtoken", "idtoken", "token",
+        "clientsecret", "secret", "password", "passwd",
+        "apikey", "credential", "authorization", "signature",
+        "privatekey", "accesskey",
+    )
+    if normalized.endswith(sensitive_suffixes):
+        return True
+
+    # Preserve separator-based key forms (api_key, subscription-key) without
+    # treating unrelated words ending in "key" (for example, "monkey") as secrets.
+    return bool(re.search(r"(?i)(?:^|[_-])key(?:$|[_-])", key))
 
 
 def find_hardcoded_url_credentials(url: str) -> List[Tuple[str, str]]:
