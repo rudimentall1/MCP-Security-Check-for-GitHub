@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, Dict, List, Tuple
+from urllib.parse import urlsplit
 
 from mcp_security.model.component import Component, ComponentKind
 
@@ -55,6 +56,23 @@ def _validate_server_definition(
         errors.append(
             f"{relative_path}: MCP server '{name}' field 'url' must be a string"
         )
+
+    if isinstance(url, str) and url.strip():
+        try:
+            parsed_url = urlsplit(url.strip())
+            valid_http_url = (
+                parsed_url.scheme.lower() in {"http", "https"}
+                and bool(parsed_url.hostname)
+            )
+            # Accessing .port also validates malformed/out-of-range ports.
+            _ = parsed_url.port
+        except ValueError:
+            valid_http_url = False
+        if not valid_http_url:
+            errors.append(
+                f"{relative_path}: MCP server '{name}' field 'url' must be a "
+                "valid absolute HTTP(S) URL with a hostname"
+            )
 
     has_command = isinstance(command, str) and bool(command.strip())
     has_url = isinstance(url, str) and bool(url.strip())
