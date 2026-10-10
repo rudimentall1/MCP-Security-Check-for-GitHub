@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from mcp_security.model.finding import Finding, Severity
+from mcp_security.redaction import redact_sensitive_text, redact_sensitive_value
 
 
 class Decision(str, Enum):
@@ -77,6 +78,25 @@ class Report:
     """Names of components discovered/analyzed, for informational purposes."""
     errors: List[str] = field(default_factory=list)
     """Read/parse errors. Any such error makes the overall scan fail closed."""
+
+    def __post_init__(self) -> None:
+        # All report formats consume this shared object. Sanitize every
+        # user-controlled string here so individual renderers cannot diverge.
+        self.scanned_files = [redact_sensitive_text(value) or "" for value in self.scanned_files]
+        self.components = [redact_sensitive_text(value) or "" for value in self.components]
+        self.errors = [redact_sensitive_text(value) or "" for value in self.errors]
+
+        for path in self.attack_paths:
+            path.chain = [redact_sensitive_text(value) or "" for value in path.chain]
+            path.description = redact_sensitive_text(path.description) or ""
+            path.remediation = redact_sensitive_text(path.remediation) or ""
+
+        if self.capability_diff is not None:
+            diff = self.capability_diff
+            diff.added = [redact_sensitive_text(value) or "" for value in diff.added]
+            diff.removed = [redact_sensitive_text(value) or "" for value in diff.removed]
+            diff.unchanged = [redact_sensitive_text(value) or "" for value in diff.unchanged]
+            diff.changed = redact_sensitive_value(diff.changed)
 
     def summary(self) -> Dict[str, int]:
         counts = {s.value: 0 for s in Severity}

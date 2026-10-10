@@ -101,3 +101,70 @@ def test_sarif_rules_are_deduplicated_by_rule_id():
     rules = sarif["runs"][0]["tool"]["driver"]["rules"]
     assert len(rules) == 1
     assert len(sarif["runs"][0]["results"]) == 2
+
+
+def test_all_report_formats_redact_user_controlled_metadata_and_diff_targets():
+    from mcp_security.model.report import AttackPath
+
+    userinfo = "REPORT_USER_SENTINEL"
+    password = "REPORT_PASSWORD_SENTINEL"
+    api_secret = "REPORT_API_SECRET_SENTINEL_987654"
+    bearer_secret = "REPORT_BEARER_SECRET_SENTINEL_987654"
+    endpoint = (
+        f"https://{userinfo}:{password}@api.example.test/mcp"
+        f"?api_key={api_secret}&mode=read"
+    )
+    bearer = "Bearer " + bearer_secret
+
+    finding = Finding(
+        rule_id="MSC018",
+        title="New external endpoint " + endpoint,
+        severity=Severity.MEDIUM,
+        description="Endpoint " + endpoint + " requested " + bearer,
+        evidence="url=" + endpoint + "; auth=" + bearer,
+        file=endpoint,
+        remediation="Remove or rotate credentials in " + endpoint,
+        component=endpoint,
+        metadata={"endpoint": endpoint, "authorization": bearer},
+    )
+    report = Report(
+        decision=Decision.WARN,
+        risk_score=21,
+        findings=[finding],
+        attack_paths=[
+            AttackPath(
+                path_id="AP001",
+                severity=Severity.MEDIUM,
+                chain=["network.external", bearer],
+                description="Observed " + endpoint,
+                remediation="Review " + endpoint,
+            )
+        ],
+        capability_diff=CapabilityDiffSummary(
+            added=["network.external"],
+            changed=[
+                {
+                    "capability": "network.external",
+                    "before_target": endpoint,
+                    "after_target": endpoint.replace("mode=read", "mode=write"),
+                }
+            ],
+        ),
+        scanned_files=[endpoint],
+        components=[endpoint],
+        errors=["Unable to validate " + endpoint + "; Authorization: " + bearer],
+    )
+
+    outputs = {
+        "terminal": render_terminal(report),
+        "markdown": render_markdown(report),
+        "json": json.dumps(report.to_dict(), indent=2),
+        "sarif": json.dumps(render_sarif(report), indent=2),
+    }
+    sensitive_values = (userinfo, password, api_secret, bearer_secret)
+
+    for output_format, output in outputs.items():
+        for value in sensitive_values:
+            assert value not in output, f"sensitive value leaked in {output_format}"
+        assert "[REDACTED]" in output, f"redaction missing in {output_format}"
+

@@ -77,6 +77,7 @@ class Finding:
         self.description = redact_sensitive_text(self.description) or ""
         self.evidence = redact_sensitive_text(self.evidence) or ""
         self.remediation = redact_sensitive_text(self.remediation) or ""
+        self.file = redact_sensitive_text(self.file) or ""
         if self.component is not None:
             self.component = redact_sensitive_text(self.component)
         self.metadata = redact_sensitive_value(self.metadata)
