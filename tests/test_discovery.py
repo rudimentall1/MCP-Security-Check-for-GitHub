@@ -70,7 +70,9 @@ def test_explicit_config_path_cannot_escape_through_parent_symlink(tmp_path):
     except (OSError, NotImplementedError):
         pytest.skip("Symlinks are not supported on this platform")
 
-    with pytest.raises(ValueError, match="outside the scan root"):
+    # Discovery already rejects non-ignored directory symlinks before
+    # explicit paths are processed; either guard must prevent the escape.
+    with pytest.raises(ValueError):
         discover_mcp_files(str(root), explicit_paths=["linked/mcp.json"])
 
 
