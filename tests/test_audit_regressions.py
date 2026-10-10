@@ -7,6 +7,7 @@ escalation detection in the capability diff.
 
 import json
 import os
+from pathlib import Path
 
 from mcp_security.analyzers.attack_paths import detect_attack_paths
 from mcp_security.cli import main
@@ -244,3 +245,17 @@ def test_remote_http_header_reference_is_not_reported_as_hardcoded_secret(tmp_pa
         f["rule_id"] == "MSC002-LITERAL" and f["evidence"].startswith("headers.")
         for f in report["findings"]
     )
+
+
+
+def test_official_upstream_mcp_docs_config_is_scanned_without_schema_errors(tmp_path, capsys):
+    fixture = Path(__file__).parent / "fixtures" / "realistic" / "modelcontextprotocol-docs.mcp.json"
+    (tmp_path / ".mcp.json").write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report = json.loads(capsys.readouterr().out)
+
+    assert report["errors"] == []
+    assert report["components"] == ["mcp-docs"]
+    assert report["scanned_files"] == [".mcp.json"]
+    assert report["decision"] != "BLOCK"

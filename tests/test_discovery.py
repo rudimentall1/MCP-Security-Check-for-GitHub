@@ -12,6 +12,7 @@ def test_is_likely_mcp_config_matches_known_filenames():
     assert is_likely_mcp_config("mcp.json")
     assert is_likely_mcp_config("claude_desktop_config.json")
     assert is_likely_mcp_config(".cursor/mcp.json")
+    assert is_likely_mcp_config(".vscode/mcp.json")
     assert is_likely_mcp_config("nested/dir/.cursor/mcp.json")
 
 
