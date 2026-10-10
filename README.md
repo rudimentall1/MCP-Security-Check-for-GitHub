@@ -153,7 +153,7 @@ GitHub Action does), `--fail-on {critical,high,medium,low,info}`,
 | 0 | ALLOW |
 | 1 | WARN |
 | 2 | BLOCK |
-| 3 | execution/configuration error |
+| 3 | incomplete scan, input, or execution/configuration error |
 
 ## 7. Configuration
 
@@ -282,6 +282,11 @@ Default decision logic (configurable via policy, see [§7](#7-configuration)):
 `--fail-on <severity>` on the CLI/Action additionally forces BLOCK if any
 finding at or above that severity is present, independent of the policy
 file's own thresholds.
+
+If a discovered MCP configuration cannot be read or parsed, the report fails
+closed with **BLOCK** and the CLI returns exit code **3**. This does not claim
+the configuration is malicious; it means the scan is incomplete and must not
+be treated as a clean security result.
 
 ## 13. Limitations
 
