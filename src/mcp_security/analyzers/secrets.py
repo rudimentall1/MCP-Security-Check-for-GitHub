@@ -44,25 +44,8 @@ def _is_sensitive_secret_key(key: str) -> bool:
     return bool(re.search(r"(?:^|[_-])key$", lowered))
 
 
-def find_hardcoded_secret_like_values(values: Dict) -> List[Tuple[str, str]]:
-    """Return key/value pairs whose string value resembles a hardcoded secret.
-
-    Sensitive field names lower the detection threshold because even short
-    values can be valid credentials. Runtime references and obvious placeholders
-    are excluded before either the key-name or token-shape heuristic runs.
-    """
-    findings: List[Tuple[str, str]] = []
-    if not isinstance(values, dict):
-        return findings
-_SENSITIVE_URL_KEY_MARKERS = (
-    "accesstoken", "refreshtoken", "token", "clientsecret", "secret",
-    "password", "passwd", "apikey", "credential", "authorization",
-    "signature", "privatekey", "accesskey",
-)
-
-
 def _is_placeholder_or_reference(value: str) -> bool:
-    """Whether a URL value is clearly a placeholder or runtime reference."""
+    """Whether a value is clearly a placeholder or runtime reference."""
     candidate = unquote(value).strip().strip("\\\"'").strip().lower()
     if not candidate or candidate.startswith("$") or "${" in candidate:
         return True
@@ -73,6 +56,43 @@ def _is_placeholder_or_reference(value: str) -> bool:
     }:
         return True
     return candidate.startswith(("your_", "your-", "replace_", "replace-"))
+
+
+def find_hardcoded_secret_like_values(values: Dict) -> List[Tuple[str, str]]:
+    """Return key/value pairs whose string value resembles a hardcoded secret.
+
+    Sensitive field names lower the detection threshold because even short
+    values can be valid credentials. Runtime references and obvious placeholders
+    are excluded before either the key-name or token-shape heuristic runs.
+    """
+    findings: List[Tuple[str, str]] = []
+    if not isinstance(values, dict):
+        return findings
+    for key, value in values.items():
+        if not isinstance(value, str) or not value.strip():
+            continue
+        if _is_placeholder_or_reference(value):
+            continue
+
+        candidate = value.strip()
+        # Remote MCP configs often place a token in "Authorization: Bearer ...".
+        # Inspect the token portion but keep the original value for redaction length.
+        parts = candidate.split(None, 1)
+        if len(parts) == 2 and parts[0].lower() in ("bearer", "basic"):
+            candidate = parts[1].strip()
+        if not candidate or _is_placeholder_or_reference(candidate):
+            continue
+
+        if _TOKEN_PATTERN.fullmatch(candidate) or _is_sensitive_secret_key(str(key)):
+            findings.append((str(key), value))
+    return findings
+
+
+_SENSITIVE_URL_KEY_MARKERS = (
+    "accesstoken", "refreshtoken", "token", "clientsecret", "secret",
+    "password", "passwd", "apikey", "credential", "authorization",
+    "signature", "privatekey", "accesskey",
+)
 
 
 def _is_sensitive_url_key(key: str) -> bool:
@@ -137,4 +157,3 @@ def find_hardcoded_url_credentials(url: str) -> List[Tuple[str, str]]:
         # handles their validity separately.
         return findings
     return findings
-
