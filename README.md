@@ -92,17 +92,17 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: head
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
 
       - name: MCP Security Check
         id: mcp_check
-        uses: rudimentall1/MCP-Security-Check-for-GitHub@130b587c8ca5e001550838b16eb6e77693d40e7c
+        uses: rudimentall1/MCP-Security-Check-for-GitHub@b4e3cb5ecf97ef9035be7cbf77b868bd8685e0ba
         with:
           path: head
           base-path: base
@@ -134,7 +134,7 @@ the analysis to compute outputs separately from the report it writes.
 Install the current code directly from GitHub (until a PyPI release is published):
 
 ```bash
-python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@130b587c8ca5e001550838b16eb6e77693d40e7c"
+python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@b4e3cb5ecf97ef9035be7cbf77b868bd8685e0ba"
 
 mcp-security-check scan .
 mcp-security-check scan . --format json

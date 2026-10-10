@@ -20,20 +20,20 @@ jobs:
       # back to a single-tree scan (base-path left unset below) -- this is
       # a real scan, not a fake diff.
       - name: Checkout HEAD
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: head
 
       - name: Checkout BASE (pull_request only)
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
 
       - name: MCP Security Check
         id: mcp_check
-        uses: rudimentall1/MCP-Security-Check-for-GitHub@130b587c8ca5e001550838b16eb6e77693d40e7c
+        uses: rudimentall1/MCP-Security-Check-for-GitHub@b4e3cb5ecf97ef9035be7cbf77b868bd8685e0ba
         with:
           path: head
           base-path: ${{ github.event_name == 'pull_request' && 'base' || '' }}
@@ -43,13 +43,13 @@ jobs:
       # runs, but these repository-write side effects are skipped for forks.
       - name: Upload SARIF
         if: always() && steps.mcp_check.outputs.sarif-path != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: ${{ steps.mcp_check.outputs.sarif-path }}
 
       - name: Post report as PR comment
         if: always() && github.event_name == 'pull_request' && steps.mcp_check.outputs.report-path != '' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
