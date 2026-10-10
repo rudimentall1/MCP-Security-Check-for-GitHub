@@ -45,28 +45,6 @@ class SecretAccessRule(Rule):
                     )
                 )
 
-        url = raw.get("url")
-        for location, value in find_hardcoded_url_credentials(url):
-            findings.append(
-                Finding(
-                    rule_id=self.rule_id,
-                    title=self.title,
-                    severity=Severity.MEDIUM,
-                    description=(
-                        "The server URL contains a literal value in a credential-bearing "
-                        "field. Review the configuration and move credentials to a supported "
-                        "secret/input reference."
-                    ),
-                    evidence=f"{location}=<redacted, {len(value)} chars>",
-                    file=component.file,
-                    component=component.name,
-                    confidence="low",
-                    remediation=(
-                        "Remove credentials from the URL and use a supported secret/input "
-                        "reference. Rotate the credential if it was committed."
-                    ),
-                )
-            )
         return findings
 
 
@@ -153,6 +131,29 @@ class HardcodedSecretRule(Rule):
                     component=component.name,
                     confidence="low",
                     remediation="Replace the literal header credential with a supported secret/input reference and rotate it if it was committed.",
+                )
+            )
+
+        url = raw.get("url")
+        for location, value in find_hardcoded_url_credentials(url):
+            findings.append(
+                Finding(
+                    rule_id=self.rule_id,
+                    title=self.title,
+                    severity=Severity.MEDIUM,
+                    description=(
+                        "The server URL contains a literal value in a credential-bearing "
+                        "field. Review the configuration and move credentials to a supported "
+                        "secret/input reference."
+                    ),
+                    evidence=f"{location}=<redacted, {len(value)} chars>",
+                    file=component.file,
+                    component=component.name,
+                    confidence="low",
+                    remediation=(
+                        "Remove credentials from the URL and use a supported secret/input "
+                        "reference. Rotate the credential if it was committed."
+                    ),
                 )
             )
         return findings
