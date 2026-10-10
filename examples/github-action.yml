@@ -32,7 +32,7 @@ jobs:
 
       - name: MCP Security Check
         id: mcp_check
-        uses: YOUR_ORG/MCP-Security-Check-for-GitHub@v1
+        uses: rudimentall1/MCP-Security-Check-for-GitHub@e1c91aae78e08c10cd73e4c1baa0b49ec9603b6b
         with:
           path: head
           base-path: ${{ github.event_name == 'pull_request' && 'base' || '' }}
