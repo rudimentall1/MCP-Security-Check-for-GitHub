@@ -7,7 +7,7 @@ name = "mcp-security-check"
 version = "0.1.0"
 description = "Scan MCP servers, AI-agent permissions and attack paths before merging a GitHub pull request."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "MCP Security Check Contributors" }]
 dependencies = [

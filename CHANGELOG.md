@@ -16,7 +16,8 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 - GitHub composite Action with one authoritative scan for all report formats.
 - Automated Action scenarios for allow, warn, block, capability escalation,
   malformed input, non-execution of dangerous-looking commands, and invalid inputs.
-- Python test matrix for versions 3.9, 3.11, and 3.13.
+- Python support is limited to maintained interpreter versions, with CI on 3.11–3.14.
+- GitHub Actions are pinned to full commit SHAs and checked for updates by Dependabot.
 - Node 24-compatible GitHub Actions dependencies to avoid deprecated runtime warnings.
 
 ### Security and reliability fixes before publication

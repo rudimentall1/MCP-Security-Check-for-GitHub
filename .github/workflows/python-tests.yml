@@ -15,14 +15,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -44,6 +44,7 @@ jobs:
               ".github/workflows/python-tests.yml",
               "examples/github-action.yml",
               "rules/default.yaml",
+              ".github/dependabot.yml",
           ]
           for name in files:
               data = yaml.safe_load(Path(name).read_text(encoding="utf-8"))
