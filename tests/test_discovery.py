@@ -45,6 +45,35 @@ def test_discover_mcp_files_supports_explicit_paths(tmp_path):
     assert "custom-config.json" in relative
 
 
+def test_explicit_config_path_cannot_escape_scan_root(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"mcpServers": {}}', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="outside the scan root"):
+        discover_mcp_files(str(root), explicit_paths=["../outside.json"])
+
+    with pytest.raises(ValueError, match="outside the scan root"):
+        discover_mcp_files(str(root), explicit_paths=[str(outside)])
+
+
+def test_explicit_config_path_cannot_escape_through_parent_symlink(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "mcp.json").write_text('{"mcpServers": {}}', encoding="utf-8")
+    link = root / "linked"
+    try:
+        os.symlink(outside_dir, link, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("Symlinks are not supported on this platform")
+
+    with pytest.raises(ValueError, match="outside the scan root"):
+        discover_mcp_files(str(root), explicit_paths=["linked/mcp.json"])
+
+
 def test_discover_mcp_files_ignores_git_and_node_modules(tmp_path):
     (tmp_path / ".git").mkdir()
     (tmp_path / ".git" / "mcp.json").write_text("{}", encoding="utf-8")
