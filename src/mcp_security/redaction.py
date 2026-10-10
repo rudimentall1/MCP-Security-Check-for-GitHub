@@ -5,8 +5,8 @@ from __future__ import annotations
 import re
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-_URL_PATTERN = re.compile(r"https?://[^\\s\\\"'<>]+", re.IGNORECASE)
-_AUTH_PATTERN = re.compile(r"(?i)\\b(Bearer|Basic)\\s+([^\\s,;\\\"']+)")
+_URL_PATTERN = re.compile(r"""https?://[^\\s"'<>]+""", re.IGNORECASE)
+_AUTH_PATTERN = re.compile(r"""(?i)\\b(Bearer|Basic)\\s+([^\\s,;"']+)""")
 _SENSITIVE_QUERY_KEY = re.compile(
     r"(?i)(token|secret|password|passwd|api[-_]?key|credential|authorization|signature|"
     r"(^|[_-])auth($|[_-])|(^|[_-])key($|[_-]))"
