@@ -100,3 +100,32 @@ jobs:
           assert report["scanned_files"] == ["mcp.json"], report
           print("OK: installed wheel scans a safe MCP config and returns ALLOW")
           PY
+
+      - name: Verify installed wheel blocks a dangerous MCP config
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DANGEROUS_FIXTURE="$RUNNER_TEMP/mcp-security-dangerous"
+          DANGEROUS_REPORT="$RUNNER_TEMP/mcp-security-dangerous-report.json"
+
+          mkdir -p "$DANGEROUS_FIXTURE"
+          cp examples/dangerous-mcp.json "$DANGEROUS_FIXTURE/mcp.json"
+
+          set +e
+          "$VENV/bin/mcp-security-check" scan "$DANGEROUS_FIXTURE" --format json > "$DANGEROUS_REPORT"
+          scan_status=$?
+          set -e
+
+          test "$scan_status" -eq 2
+
+          "$VENV/bin/python" - "$DANGEROUS_REPORT" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as f:
+              report = json.load(f)
+          assert report["decision"] == "BLOCK", report
+          assert any(f["rule_id"] == "MSC008" for f in report["findings"]), report
+          print("OK: installed wheel detects remote-script-execution pattern and returns BLOCK")
+          PY
