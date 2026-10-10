@@ -17,16 +17,17 @@ from typing import Dict, List, Tuple
 _TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_\-/+=]{24,}$")
 
 
-def find_hardcoded_secret_like_values(env: Dict) -> List[Tuple[str, str]]:
-    """Return (key, value) pairs whose *value* looks like a hardcoded secret.
+def find_hardcoded_secret_like_values(values: Dict) -> List[Tuple[str, str]]:
+    """Return key/value pairs whose string value resembles a hardcoded secret.
 
     Only flags values, never keys -- a key named TOKEN with an empty or
-    placeholder value (e.g. "${TOKEN}", "changeme") is not flagged.
+    placeholder value (e.g. "${TOKEN}", "changeme") is not flagged. The same
+    check is used for environment values and HTTP header values.
     """
     findings: List[Tuple[str, str]] = []
-    if not isinstance(env, dict):
+    if not isinstance(values, dict):
         return findings
-    for key, value in env.items():
+    for key, value in values.items():
         if not isinstance(value, str):
             continue
         # Configs commonly use ${input:...}, ${env:...}, or ${TOKEN} as

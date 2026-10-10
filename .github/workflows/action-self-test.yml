@@ -725,3 +725,61 @@ jobs:
           set -euo pipefail
           test "${{ steps.check.outcome }}" = "failure"
           test ! -e /tmp/mcp-security-input-injection-marker
+
+
+  # ==========================================================================
+  # J — REMOTE HTTP CREDENTIALS ARE DETECTED WITHOUT LEAKING THE VALUE
+  # ==========================================================================
+
+  scenario-j-http-header-secret:
+    name: "J - Hardcoded HTTP auth header is redacted"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Write remote MCP fixture with synthetic token
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fixture
+          cat > fixture/.mcp.json << 'EOF'
+          {
+            "mcpServers": {
+              "remote": {
+                "type": "http",
+                "url": "https://api.example.com/mcp",
+                "headers": {
+                  "Authorization": "Bearer TEST_SAMPLE_CREDENTIAL_abcdef0123456789abcdef0123456789"
+                }
+              }
+            }
+          }
+          EOF
+
+      - name: Run MCP Security Check
+        id: check
+        uses: ./
+        with:
+          path: fixture
+          format: json
+          fail-on: critical
+
+      - name: Assert credential finding is redacted
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.check.outputs.decision }}" = "WARN"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("mcp-security-report.json").read_text(encoding="utf-8"))
+          findings = [f for f in report["findings"] if f["rule_id"] == "MSC002-LITERAL"]
+          assert any(
+              f["evidence"].startswith("headers.Authorization=<redacted")
+              for f in findings
+          ), findings
+          assert "TEST_SAMPLE_CREDENTIAL_abcdef0123456789abcdef0123456789" not in json.dumps(report)
+          print("OK: auth header credential detected and redacted in report")
+          PY

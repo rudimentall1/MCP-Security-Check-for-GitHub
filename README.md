@@ -300,7 +300,8 @@ malicious; they mean the requested assessment could not be completed.
 - MCP configuration is not universally standardized; discovery covers common,
   recognizable filenames/paths (`.mcp.json`, `mcp.json`,
   `claude_desktop_config.json`, `.cursor/mcp.json`, ...) — not every possible
-  client's config layout.
+  client's config layout. It parses the portable top-level `mcpServers` format
+  and the VS Code top-level `servers` format.
 - Capability extraction is heuristic (command names, argument tokens,
   environment variable naming, declared tool names/permissions). It can miss
   capabilities that are not expressible in the inspected fields, and it does
@@ -309,7 +310,9 @@ malicious; they mean the requested assessment could not be completed.
   metadata; they are **not** proof that a component is trustworthy.
 - Entropy-based hardcoded-secret detection and description-based heuristics
   (MSC013, MSC014, MSC002-LITERAL) can produce false positives; they are
-  marked with lower confidence rather than certainty.
+  marked with lower confidence rather than certainty. The literal-secret
+  check covers environment values and remote HTTP header credentials. It redacts
+  detected values in reports and ignores explicit input/environment references.
 - This tool does not detect all attacks and does not guarantee protection —
   it surfaces dangerous capabilities and plausible attack paths for human
   review before merge.
