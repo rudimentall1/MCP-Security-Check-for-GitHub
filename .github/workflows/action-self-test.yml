@@ -381,19 +381,22 @@ jobs:
 
       - name: Run MCP Security Check
         id: check
+        continue-on-error: true
         uses: ./
         with:
           path: fixture
           format: json
 
-      - name: Assert clean handling
+      - name: Assert fail-closed handling
         shell: bash
         run: |
           set -euo pipefail
 
           echo "decision=${{ steps.check.outputs.decision }}"
+          echo "outcome=${{ steps.check.outcome }}"
 
-          test "${{ steps.check.outputs.decision }}" = "ALLOW"
+          test "${{ steps.check.outputs.decision }}" = "BLOCK"
+          test "${{ steps.check.outcome }}" = "failure"
 
       - name: Verify recorded error
         shell: bash
@@ -406,7 +409,7 @@ jobs:
           with open("mcp-security-report.json", encoding="utf-8") as f:
               data = json.load(f)
 
-          assert data["decision"] == "ALLOW"
+          assert data["decision"] == "BLOCK", data["decision"]
           assert len(data["errors"]) == 1, data["errors"]
           assert "malformed JSON" in data["errors"][0]
 
