@@ -102,7 +102,7 @@ jobs:
 
       - name: MCP Security Check
         id: mcp_check
-        uses: rudimentall1/MCP-Security-Check-for-GitHub@e1c91aae78e08c10cd73e4c1baa0b49ec9603b6b
+        uses: rudimentall1/MCP-Security-Check-for-GitHub@130b587c8ca5e001550838b16eb6e77693d40e7c
         with:
           path: head
           base-path: base
@@ -116,7 +116,8 @@ See [action.yml](action.yml) for all inputs/outputs and
 [examples/github-action.yml](examples/github-action.yml) for a complete
 workflow including SARIF upload, a PR comment, and the `push`/manual-trigger
 fallback (the minimal example above assumes a `pull_request` trigger with
-both BASE and HEAD checked out).
+both BASE and HEAD checked out). The full example skips SARIF upload and PR
+comments for fork-originated PRs, whose token is read-only.
 
 Inputs: `path`, `base-path` (optional — when set, runs a capability diff
 instead of a single-tree scan; see the comment in
@@ -133,7 +134,7 @@ the analysis to compute outputs separately from the report it writes.
 Install the current code directly from GitHub (until a PyPI release is published):
 
 ```bash
-python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@master"
+python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@130b587c8ca5e001550838b16eb6e77693d40e7c"
 
 mcp-security-check scan .
 mcp-security-check scan . --format json

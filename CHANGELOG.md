@@ -22,6 +22,7 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 
 - Fail closed when a discovered MCP config cannot be read or parsed.
 - Fail with an error for a missing scan root, explicitly requested file, or policy file.
+- Reject empty or non-mapping policy YAML instead of silently selecting defaults.
 - Reject explicitly requested symlinked or oversized files rather than silently
   omitting them from a requested scan.
 - Isolate components during attack-path analysis to avoid cross-component chains.

@@ -83,6 +83,20 @@ def test_cli_missing_policy_file_fails_closed(tmp_path, capsys):
     assert captured.out == ""
 
 
+
+
+def test_cli_empty_policy_file_fails_closed(tmp_path, capsys):
+    (tmp_path / "mcp.json").write_text('{"command": "docs-server"}', encoding="utf-8")
+    empty_policy = tmp_path / "policy.yaml"
+    empty_policy.write_text("", encoding="utf-8")
+    exit_code = main([
+        "scan", str(tmp_path), "--format", "json", "--config", str(empty_policy)
+    ])
+    captured = capsys.readouterr()
+    assert exit_code == 3
+    assert "policy file must contain a YAML mapping" in captured.err
+    assert captured.out == ""
+
 def test_cli_missing_explicit_file_fails_closed(tmp_path, capsys):
     (tmp_path / "mcp.json").write_text('{"command": "docs-server"}', encoding="utf-8")
     exit_code = main([
