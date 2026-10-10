@@ -11,8 +11,12 @@ def test_is_likely_mcp_config_matches_known_filenames():
     assert is_likely_mcp_config(".mcp.json")
     assert is_likely_mcp_config("mcp.json")
     assert is_likely_mcp_config("claude_desktop_config.json")
+    assert is_likely_mcp_config(".mcp.yaml")
+    assert is_likely_mcp_config("mcp.yml")
+    assert is_likely_mcp_config("claude_desktop_config.yaml")
     assert is_likely_mcp_config(".cursor/mcp.json")
-    assert is_likely_mcp_config(".vscode/mcp.json")
+    assert is_likely_mcp_config(".cursor/mcp.yaml")
+    assert is_likely_mcp_config(".vscode/mcp.yml")
     assert is_likely_mcp_config("nested/dir/.cursor/mcp.json")
 
 
@@ -105,3 +109,16 @@ def test_directory_walk_errors_are_not_silently_ignored(tmp_path, monkeypatch):
     monkeypatch.setattr(os, "walk", failing_walk)
     with pytest.raises(PermissionError, match="permission denied"):
         iter_candidate_files(str(tmp_path))
+
+
+
+def test_discover_mcp_files_finds_yaml_mcp_config(tmp_path):
+    (tmp_path / "mcp.yaml").write_text(
+        "mcpServers:\n  srv:\n    command: docs-server\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "unrelated.yaml").write_text("notMcp: true\n", encoding="utf-8")
+
+    found = discover_mcp_files(str(tmp_path))
+    relative = {f.relative_path for f in found}
+    assert relative == {"mcp.yaml"}
