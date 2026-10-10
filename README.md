@@ -102,7 +102,7 @@ jobs:
 
       - name: MCP Security Check
         id: mcp_check
-        uses: rudimentall1/MCP-Security-Check-for-GitHub@61f1904ffddb686b1304f0d6d0896d0d104ab6f6
+        uses: rudimentall1/MCP-Security-Check-for-GitHub@3ef2919ad6879405bd1b072370b6189586f7b6a4
         with:
           path: head
           base-path: base
@@ -134,7 +134,7 @@ the analysis to compute outputs separately from the report it writes.
 Install the current code directly from GitHub (until a PyPI release is published):
 
 ```bash
-python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@61f1904ffddb686b1304f0d6d0896d0d104ab6f6"
+python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@3ef2919ad6879405bd1b072370b6189586f7b6a4"
 
 mcp-security-check scan .
 mcp-security-check scan . --format json
