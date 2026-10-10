@@ -636,3 +636,34 @@ jobs:
         run: |
           set -euo pipefail
           test "${{ steps.symlinked.outcome }}" = "failure"
+
+
+  # ==========================================================================
+  # I — ACTION INPUTS MUST NOT BECOME SHELL CODE
+  # ==========================================================================
+
+  scenario-i-shell-input-injection:
+    name: "I - Shell-looking path input is treated as data"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Clear marker
+        shell: bash
+        run: rm -f /tmp/mcp-security-input-injection-marker
+
+      - name: Run with shell-looking path input
+        id: check
+        continue-on-error: true
+        uses: ./
+        with:
+          path: '$(touch /tmp/mcp-security-input-injection-marker)'
+          format: json
+
+      - name: Assert input was not executed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.check.outcome }}" = "failure"
+          test ! -e /tmp/mcp-security-input-injection-marker

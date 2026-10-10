@@ -23,6 +23,8 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 
 ### Security and reliability fixes before publication
 
+- Pass composite Action inputs through environment variables rather than interpolating
+  them into shell source, preventing shell-looking paths from becoming commands.
 - Fail closed when a discovered MCP config cannot be read or parsed.
 - Fail with an error for a missing scan root, explicitly requested file, or policy file.
 - Reject empty or non-mapping policy YAML instead of silently selecting defaults.

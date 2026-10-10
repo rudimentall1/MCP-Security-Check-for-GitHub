@@ -79,6 +79,12 @@ runs:
     - name: Run MCP Security Check
       id: run_check
       shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_BASE_PATH: ${{ inputs.base-path }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
       run: |
         set -euo pipefail
 
@@ -88,27 +94,27 @@ runs:
 
         CONFIG_ARGS=()
 
-        if [ -n "${{ inputs.config }}" ]; then
-          CONFIG_ARGS=(--config "${{ inputs.config }}")
+        if [ -n "$INPUT_CONFIG" ]; then
+          CONFIG_ARGS=(--config "$INPUT_CONFIG")
         fi
 
         exit_code=0
 
-        if [ -n "${{ inputs.base-path }}" ]; then
+        if [ -n "$INPUT_BASE_PATH" ]; then
           echo "Running capability diff:"
-          echo "  BASE: ${{ inputs.base-path }}"
-          echo "  HEAD: ${{ inputs.path }}"
+          echo "  BASE: $INPUT_BASE_PATH"
+          echo "  HEAD: $INPUT_PATH"
 
           set +e
 
           mcp-security-check diff \
-            "${{ inputs.base-path }}" \
-            "${{ inputs.path }}" \
+            "$INPUT_BASE_PATH" \
+            "$INPUT_PATH" \
             --format json \
             --output "$JSON_FILE" \
             --sarif-output "$SARIF_FILE" \
             --markdown-output "$MD_FILE" \
-            --fail-on "${{ inputs.fail-on }}" \
+            --fail-on "$INPUT_FAIL_ON" \
             "${CONFIG_ARGS[@]}"
 
           exit_code=$?
@@ -116,17 +122,17 @@ runs:
           set -e
         else
           echo "Running single-tree scan:"
-          echo "  PATH: ${{ inputs.path }}"
+          echo "  PATH: $INPUT_PATH"
 
           set +e
 
           mcp-security-check scan \
-            "${{ inputs.path }}" \
+            "$INPUT_PATH" \
             --format json \
             --output "$JSON_FILE" \
             --sarif-output "$SARIF_FILE" \
             --markdown-output "$MD_FILE" \
-            --fail-on "${{ inputs.fail-on }}" \
+            --fail-on "$INPUT_FAIL_ON" \
             "${CONFIG_ARGS[@]}"
 
           exit_code=$?
@@ -161,9 +167,9 @@ runs:
 
         REPORT_PATH="$MD_FILE"
 
-        if [ "${{ inputs.format }}" = "json" ]; then
+        if [ "$INPUT_FORMAT" = "json" ]; then
           REPORT_PATH="$JSON_FILE"
-        elif [ "${{ inputs.format }}" = "sarif" ]; then
+        elif [ "$INPUT_FORMAT" = "sarif" ]; then
           REPORT_PATH="$SARIF_FILE"
         fi
 
@@ -184,11 +190,14 @@ runs:
     # -----------------------------------------------------------------------
     - name: Fail workflow according to policy
       shell: bash
+      env:
+        SCANNER_EXIT_CODE: ${{ steps.run_check.outputs.exit_code }}
+        SCANNER_DECISION: ${{ steps.run_check.outputs.decision }}
       run: |
         set -euo pipefail
 
-        code="${{ steps.run_check.outputs.exit_code }}"
-        decision="${{ steps.run_check.outputs.decision }}"
+        code="$SCANNER_EXIT_CODE"
+        decision="$SCANNER_DECISION"
 
         echo "MCP Security Check"
         echo "Decision: $decision"
