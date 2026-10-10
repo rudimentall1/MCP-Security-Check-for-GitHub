@@ -76,7 +76,7 @@ class Report:
     components: List[str] = field(default_factory=list)
     """Names of components discovered/analyzed, for informational purposes."""
     errors: List[str] = field(default_factory=list)
-    """Non-fatal errors encountered while scanning (e.g. malformed files)."""
+    """Read/parse errors. Any such error makes the overall scan fail closed."""
 
     def summary(self) -> Dict[str, int]:
         counts = {s.value: 0 for s in Severity}
