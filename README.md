@@ -127,8 +127,10 @@ the analysis to compute outputs separately from the report it writes.
 
 ## 6. CLI usage
 
+Install the current code directly from GitHub (until a PyPI release is published):
+
 ```bash
-pip install mcp-security-check
+python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@master"
 
 mcp-security-check scan .
 mcp-security-check scan . --format json
