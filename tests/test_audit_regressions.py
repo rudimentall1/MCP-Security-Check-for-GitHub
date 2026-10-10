@@ -400,3 +400,51 @@ def test_url_fragment_credential_is_detected_but_placeholder_ignored(tmp_path, c
     assert not any("refresh_token" in f["evidence"] for f in literal_findings)
     assert secret not in report_text
 
+
+def test_short_literal_credentials_in_env_and_headers_are_detected_and_redacted(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    short_env_secret = "k7Q"
+    short_header_secret = "h2P"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": "https://api.example.com/mcp",
+                    "env": {
+                        "SERVICE_API_KEY": short_env_secret,
+                        "LOG_LEVEL": "debug",
+                        "DEPLOY_MODE": "production",
+                        "RUNTIME_TOKEN": "$" + "{input:token}",
+                    },
+                    "headers": {
+                        "x-api-key": short_header_secret,
+                        "X-Mode": "read",
+                        "Authorization": "Bearer " + "$" + "{input:authToken}",
+                    },
+                }
+            },
+            "inputs": [
+                {"id": "token", "type": "promptString", "password": True},
+                {"id": "authToken", "type": "promptString", "password": True},
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report_text = capsys.readouterr().out
+    report = json.loads(report_text)
+    literal_findings = [
+        f for f in report["findings"] if f["rule_id"] == "MSC002-LITERAL"
+    ]
+
+    assert any(f["evidence"].startswith("env.SERVICE_API_KEY=<redacted") for f in literal_findings)
+    assert any(f["evidence"].startswith("headers.x-api-key=<redacted") for f in literal_findings)
+    assert not any(f["evidence"].startswith("env.LOG_LEVEL=") for f in literal_findings)
+    assert not any(f["evidence"].startswith("env.DEPLOY_MODE=") for f in literal_findings)
+    assert not any(f["evidence"].startswith("headers.X-Mode=") for f in literal_findings)
+    assert short_env_secret not in report_text
+    assert short_header_secret not in report_text
+    assert "$" + "{input:token}" not in report_text
+

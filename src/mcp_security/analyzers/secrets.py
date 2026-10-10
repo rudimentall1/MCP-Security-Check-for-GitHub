@@ -18,16 +18,60 @@ from urllib.parse import parse_qsl, unquote, urlsplit
 _TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_\-/+=]{24,}$")
 
 
+_SENSITIVE_SECRET_KEY_EXACT = {
+    "auth", "authorization", "key", "secret", "token", "password", "passwd",
+    "credential", "credentials", "cookie", "setcookie", "clientsecret",
+    "apikey", "accesskey", "accesskeyid", "privatekey", "secretaccesskey",
+}
+_SENSITIVE_SECRET_KEY_SUFFIXES = (
+    "authorization", "accesstoken", "refreshtoken", "idtoken", "token",
+    "clientsecret", "secret", "password", "passwd", "credentials",
+    "credential", "apikey", "accesskeyid", "accesskey", "privatekey",
+    "secretaccesskey", "cookie",
+)
+
+
+def _is_sensitive_secret_key(key: str) -> bool:
+    """Check the field name rather than flagging arbitrary short values."""
+    lowered = key.strip().lower()
+    normalized = re.sub(r"[^a-z0-9]", "", lowered)
+    if normalized in _SENSITIVE_SECRET_KEY_EXACT:
+        return True
+    if normalized.endswith(_SENSITIVE_SECRET_KEY_SUFFIXES):
+        return True
+    # Generic KEY is sensitive only when it is a standalone name or a
+    # separator-delimited suffix; this avoids false positives like "monkey".
+    return bool(re.search(r"(?:^|[_-])key$", lowered))
+
+
 def find_hardcoded_secret_like_values(values: Dict) -> List[Tuple[str, str]]:
     """Return key/value pairs whose string value resembles a hardcoded secret.
 
-    Only flags values, never keys -- a key named TOKEN with an empty or
-    placeholder value (e.g. "${TOKEN}", "changeme") is not flagged. The same
-    check is used for environment values and HTTP header values.
+    Sensitive field names lower the detection threshold because even short
+    values can be valid credentials. Runtime references and obvious placeholders
+    are excluded before either the key-name or token-shape heuristic runs.
     """
     findings: List[Tuple[str, str]] = []
     if not isinstance(values, dict):
         return findings
+    for key, value in values.items():
+        if not isinstance(value, str) or not value.strip():
+            continue
+        if _is_placeholder_or_reference(value):
+            continue
+
+        candidate = value.strip()
+        # Remote MCP configs often place a token in "Authorization: Bearer ...".
+        # Inspect the token portion but keep the original value for redaction length.
+        parts = candidate.split(None, 1)
+        if len(parts) == 2 and parts[0].lower() in ("bearer", "basic"):
+            candidate = parts[1].strip()
+        if not candidate or _is_placeholder_or_reference(candidate):
+            continue
+
+        if _TOKEN_PATTERN.fullmatch(candidate) or _is_sensitive_secret_key(str(key)):
+            findings.append((str(key), value))
+    return findings
     for key, value in values.items():
         if not isinstance(value, str):
             continue
