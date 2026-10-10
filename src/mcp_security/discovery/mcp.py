@@ -23,14 +23,20 @@ KNOWN_MCP_FILENAMES = {
     ".mcp.json",
     "mcp.json",
     "claude_desktop_config.json",
+    ".mcp.yaml",
+    ".mcp.yml",
+    "mcp.yaml",
+    "mcp.yml",
+    "claude_desktop_config.yaml",
+    "claude_desktop_config.yml",
 }
 
 # Suffix patterns for filenames within recognized directories, e.g.
 # ".cursor/mcp.json", ".vscode/mcp.json".
-KNOWN_MCP_RELATIVE_SUFFIXES = (
-    os.path.join(".cursor", "mcp.json"),
-    os.path.join(".vscode", "mcp.json"),
-    os.path.join(".codeium", "mcp.json"),
+KNOWN_MCP_RELATIVE_SUFFIXES = tuple(
+    os.path.join(directory, f"mcp{extension}")
+    for directory in (".cursor", ".vscode", ".codeium")
+    for extension in (".json", ".yaml", ".yml")
 )
 
 # File extensions that are worth parsing at all (used to filter down the
