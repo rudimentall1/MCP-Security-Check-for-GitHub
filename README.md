@@ -358,6 +358,14 @@ step above (see `[tool.pytest.ini_options]` in `pyproject.toml`) — the
 install is still recommended so the `mcp-security-check` console script
 and normal `import mcp_security` work outside of tests.
 
+## Project status and security
+
+- [CHANGELOG](CHANGELOG.md) — current release scope and known limitations.
+- [Security policy](SECURITY.md) — responsible vulnerability reporting.
+
+The first version has not been published as a GitHub Release or PyPI package yet.
+The source can be installed using the commit-pinned command above.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

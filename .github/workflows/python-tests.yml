@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -31,6 +31,25 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
+
+      - name: Validate Action and workflow YAML
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          files = [
+              "action.yml",
+              ".github/workflows/action-self-test.yml",
+              ".github/workflows/python-tests.yml",
+              "examples/github-action.yml",
+              "rules/default.yaml",
+          ]
+          for name in files:
+              data = yaml.safe_load(Path(name).read_text(encoding="utf-8"))
+              assert isinstance(data, dict), f"{name} must be a YAML mapping"
+              print(f"OK: {name}")
+          PY
 
       - name: Run test suite
         run: python -m pytest -q
