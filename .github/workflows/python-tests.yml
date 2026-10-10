@@ -106,6 +106,7 @@ jobs:
         run: |
           set -euo pipefail
 
+          VENV="$RUNNER_TEMP/mcp-security-smoke"
           DANGEROUS_FIXTURE="$RUNNER_TEMP/mcp-security-dangerous"
           DANGEROUS_REPORT="$RUNNER_TEMP/mcp-security-dangerous-report.json"
 
