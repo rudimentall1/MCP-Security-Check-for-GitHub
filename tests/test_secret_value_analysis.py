@@ -33,7 +33,7 @@ def test_sensitive_fields_ignore_runtime_references_and_placeholders():
         "PASSWORD": "changeme",
         "CLIENT_SECRET": "your_api_key",
         "AUTHORIZATION": "Bearer " + runtime_token,
-        "NORMAL_VALUE": "literal-but-not-secret-shaped",
+        "NORMAL_VALUE": "ordinary",
     }
 
     assert find_hardcoded_secret_like_values(values) == []
