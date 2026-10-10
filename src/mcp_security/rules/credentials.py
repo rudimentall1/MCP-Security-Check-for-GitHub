@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import List
 
-from mcp_security.analyzers.secrets import find_hardcoded_secret_like_values
+from mcp_security.analyzers.secrets import (
+    find_hardcoded_secret_like_values,
+    find_hardcoded_url_credentials,
+)
 from mcp_security.model.component import Component
 from mcp_security.model.finding import Finding, Severity
 from mcp_security.rules.base import Rule, unique_capabilities_by_id
@@ -41,6 +44,29 @@ class SecretAccessRule(Rule):
                         remediation="Confirm the referenced secret is actually required by this component and scoped to least privilege.",
                     )
                 )
+
+        url = raw.get("url")
+        for location, value in find_hardcoded_url_credentials(url):
+            findings.append(
+                Finding(
+                    rule_id=self.rule_id,
+                    title=self.title,
+                    severity=Severity.MEDIUM,
+                    description=(
+                        "The server URL contains a literal value in a credential-bearing "
+                        "field. Review the configuration and move credentials to a supported "
+                        "secret/input reference."
+                    ),
+                    evidence=f"{location}=<redacted, {len(value)} chars>",
+                    file=component.file,
+                    component=component.name,
+                    confidence="low",
+                    remediation=(
+                        "Remove credentials from the URL and use a supported secret/input "
+                        "reference. Rotate the credential if it was committed."
+                    ),
+                )
+            )
         return findings
 
 

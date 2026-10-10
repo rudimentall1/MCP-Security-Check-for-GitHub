@@ -302,3 +302,101 @@ def test_diff_report_redacts_userinfo_and_sensitive_query_values(tmp_path, capsy
     for sensitive in (userinfo_secret, before_secret, after_secret, "pilot-user"):
         assert sensitive not in report_text
     assert "REDACTED" in report_text
+
+
+def test_literal_url_query_credential_is_detected_and_redacted(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    secret = "short_demo_key_7"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": f"https://api.example.com/mcp?api_key={secret}&mode=read",
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report_text = capsys.readouterr().out
+    report = json.loads(report_text)
+    literal_findings = [f for f in report["findings"] if f["rule_id"] == "MSC002-LITERAL"]
+
+    assert any(f["evidence"].startswith("url.query.api_key=<redacted") for f in literal_findings)
+    assert secret not in report_text
+
+
+def test_literal_url_userinfo_password_is_detected_and_redacted(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    secret = "URL_PASSWORD_SAMPLE_abcdef0123456789"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": f"https://demo-user:{secret}@example.com/mcp",
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report_text = capsys.readouterr().out
+    report = json.loads(report_text)
+    literal_findings = [f for f in report["findings"] if f["rule_id"] == "MSC002-LITERAL"]
+
+    assert any(f["evidence"].startswith("url.userinfo.password=<redacted") for f in literal_findings)
+    assert secret not in report_text
+    assert "demo-user" not in report_text
+
+
+def test_url_runtime_credential_reference_is_not_reported_as_hardcoded(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": "https://api.example.com/mcp?access_token=${input:accessToken}",
+                }
+            },
+            "inputs": [{"id": "accessToken", "type": "promptString", "password": True}],
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report = json.loads(capsys.readouterr().out)
+    assert not any(
+        f["rule_id"] == "MSC002-LITERAL" and f["evidence"].startswith("url.")
+        for f in report["findings"]
+    )
+
+
+def test_url_fragment_credential_is_detected_but_placeholder_ignored(tmp_path, capsys):
+    config = tmp_path / ".mcp.json"
+    secret = "FRAGMENT_SAMPLE_abcdef0123456789"
+    config.write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": f"https://api.example.com/mcp#access_token={secret}&refresh_token=changeme",
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+
+    main(["scan", str(tmp_path), "--format", "json"])
+    report_text = capsys.readouterr().out
+    report = json.loads(report_text)
+    literal_findings = [f for f in report["findings"] if f["rule_id"] == "MSC002-LITERAL"]
+
+    assert any(f["evidence"].startswith("url.fragment.access_token=<redacted") for f in literal_findings)
+    assert not any("refresh_token" in f["evidence"] for f in literal_findings)
+    assert secret not in report_text
+
