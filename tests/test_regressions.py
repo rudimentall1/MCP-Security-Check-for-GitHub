@@ -151,19 +151,20 @@ class TestExplicitFileSecurity(unittest.TestCase):
         os.unlink(large_file)
 
     def test_explicit_file_symlink_rejected(self):
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b'{}')
-            target = f.name
-        symlink = target + '.symlink'
-        try:
-            os.symlink(target, symlink)
-        except (OSError, NotImplementedError):
-            self.skipTest('Symlinks not supported')
-            return
-        result = discover_mcp_files(root=os.path.dirname(target), explicit_paths=[symlink])
-        self.assertEqual(result, [])
-        os.unlink(symlink)
-        os.unlink(target)
+        # Use an isolated scan root. NamedTemporaryFile directly in /tmp makes
+        # discover_mcp_files scan every other test's temporary files as well.
+        with tempfile.TemporaryDirectory() as temp_dir:
+            target = os.path.join(temp_dir, "target.json")
+            with open(target, "wb") as f:
+                f.write(b"{}")
+            symlink = target + ".symlink"
+            try:
+                os.symlink(target, symlink)
+            except (OSError, NotImplementedError):
+                self.skipTest("Symlinks not supported")
+                return
+            result = discover_mcp_files(root=temp_dir, explicit_paths=[symlink])
+            self.assertEqual(result, [])
 
 
 class TestCapabilityDiffComponentIdentity(unittest.TestCase):
