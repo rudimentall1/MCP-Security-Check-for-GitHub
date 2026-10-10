@@ -102,16 +102,18 @@ def test_binary_garbage_file_does_not_crash_cli(tmp_path, capsys):
     config.write_bytes(bytes(range(256)))
     exit_code = main(["scan", str(tmp_path), "--format", "json"])
     out = json.loads(capsys.readouterr().out)
-    assert exit_code in (0, 1, 2)  # not 3 (config/exec error) and no traceback raised
-    assert out["decision"] in ("ALLOW", "WARN", "BLOCK")
+    assert exit_code == 3  # an incomplete security scan must fail closed
+    assert out["decision"] == "BLOCK"
+    assert out["errors"]
 
 
 def test_empty_file_does_not_crash(tmp_path, capsys):
     (tmp_path / "mcp.json").write_text("", encoding="utf-8")
     exit_code = main(["scan", str(tmp_path), "--format", "json"])
     out = json.loads(capsys.readouterr().out)
-    assert exit_code == 0
-    assert out["decision"] == "ALLOW"
+    assert exit_code == 3  # empty JSON is invalid, not a clean scan
+    assert out["decision"] == "BLOCK"
+    assert out["errors"]
 
 
 # ---------------------------------------------------------------------------
