@@ -423,7 +423,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s\\n' '{"mcpServers":[]}' > fixture/mcp.json
+          printf '%s\n' '{"mcpServers":[]}' > fixture/mcp.json
 
       - name: Run structural validation case
         id: bad_schema
@@ -452,7 +452,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s\\n' '{"mcpServers":{"srv":{"tools":["run_shell"]}}}' > fixture/mcp.json
+          printf '%s\n' '{"mcpServers":{"srv":{"tools":["run_shell"]}}}' > fixture/mcp.json
 
       - name: Run missing transport case
         id: no_transport
@@ -606,7 +606,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p fixture
-          printf '%s\\n' '{"command":"docs-server"}' > fixture/mcp.json
+          printf '%s\n' '{"command":"docs-server"}' > fixture/mcp.json
 
       - name: Missing scan root must fail
         id: missing_root
@@ -677,7 +677,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s\\n' '{"command":"docs-server"}' > fixture/target.json
+          printf '%s\n' '{"command":"docs-server"}' > fixture/target.json
           rm fixture/mcp.json
           ln -s target.json fixture/mcp.json
 
