@@ -259,3 +259,46 @@ def test_official_upstream_mcp_docs_config_is_scanned_without_schema_errors(tmp_
     assert report["components"] == ["mcp-docs"]
     assert report["scanned_files"] == [".mcp.json"]
     assert report["decision"] != "BLOCK"
+
+
+
+def test_diff_report_redacts_userinfo_and_sensitive_query_values(tmp_path, capsys):
+    base_dir = tmp_path / "base"
+    head_dir = tmp_path / "head"
+    base_dir.mkdir()
+    head_dir.mkdir()
+    userinfo_secret = "pw_SENTINEL_123456789"
+    before_secret = "BEFORE_SAMPLE_SECRET_abcdefgh123456"
+    after_secret = "AFTER_SAMPLE_SECRET_abcdefgh123456"
+
+    (base_dir / ".mcp.json").write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": f"https://pilot-user:{userinfo_secret}@api.example.com/mcp?api_key={before_secret}&mode=read",
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+    (head_dir / ".mcp.json").write_text(
+        json.dumps({
+            "mcpServers": {
+                "remote": {
+                    "type": "http",
+                    "url": f"https://pilot-user:{userinfo_secret}@api.example.com/mcp?api_key={after_secret}&mode=read",
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+
+    main(["diff", str(base_dir), str(head_dir), "--format", "json"])
+    report_text = capsys.readouterr().out
+    report = json.loads(report_text)
+
+    assert any(f["rule_id"] == "MSC020" for f in report["findings"])
+    for sensitive in (userinfo_secret, before_secret, after_secret, "pilot-user"):
+        assert sensitive not in report_text
+    assert "REDACTED" in report_text

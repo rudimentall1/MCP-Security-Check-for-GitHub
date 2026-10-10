@@ -319,6 +319,12 @@ malicious; they mean the requested assessment could not be completed.
 
 ## 14. Security model
 
+Reports redact HTTP Basic/Bearer credentials, URL userinfo, and sensitive
+query/fragment parameters (for example, token, password, or api_key values).
+This applies to findings and BASE/HEAD target-diff summaries so report output
+can be shared without reprinting common credential formats. Redaction is
+pattern-based and is not a substitute for keeping secrets out of configuration.
+
 The scanner only reads and analyzes text-based configuration files. It never:
 
 - executes MCP commands, configuration commands, or skill instructions

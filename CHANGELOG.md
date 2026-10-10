@@ -35,6 +35,8 @@ Notable changes to MCP Security Check for GitHub are recorded here.
   or oversized rather than silently omitting them.
 - Surface directory traversal errors instead of accepting an incomplete scan.
 - Detect and redact likely hardcoded credentials in remote MCP HTTP headers.
+- Redact URL userinfo, sensitive query/fragment values, and Bearer/Basic tokens
+  from finding text and capability-diff targets before output.
 - Preserve HTTP header references such as ${input:accessToken} without reporting
   them as committed literal secrets.
 - Add regression coverage for portable mcpServers and VS Code servers configs.

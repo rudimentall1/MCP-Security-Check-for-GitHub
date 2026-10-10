@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from mcp_security.redaction import redact_sensitive_text, redact_sensitive_value
+
 
 class Severity(str, Enum):
     CRITICAL = "critical"
@@ -66,6 +68,18 @@ class Finding:
     component: Optional[str] = None
     confidence: str = "high"
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        # Findings flow into terminal, Markdown, JSON and SARIF outputs. Redact
+        # sensitive URL parts and auth tokens once at the model boundary so no
+        # output formatter can accidentally publish them verbatim.
+        self.title = redact_sensitive_text(self.title) or ""
+        self.description = redact_sensitive_text(self.description) or ""
+        self.evidence = redact_sensitive_text(self.evidence) or ""
+        self.remediation = redact_sensitive_text(self.remediation) or ""
+        if self.component is not None:
+            self.component = redact_sensitive_text(self.component)
+        self.metadata = redact_sensitive_value(self.metadata)
 
     def to_dict(self) -> Dict[str, Any]:
         return {

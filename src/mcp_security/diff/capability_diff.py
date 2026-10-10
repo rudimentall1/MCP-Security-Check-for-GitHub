@@ -24,6 +24,7 @@ from mcp_security.model.capability import Capability
 from mcp_security.model.component import Component
 from mcp_security.model.finding import Finding, Severity
 from mcp_security.model.report import CapabilityDiffSummary
+from mcp_security.redaction import redact_sensitive_text
 
 MSC015 = "MSC015"
 MSC018 = "MSC018"
@@ -71,8 +72,8 @@ def diff_components(
             changed.append(
                 {
                     "capability": cap_id,
-                    "before_target": before.target,
-                    "after_target": after.target,
+                    "before_target": redact_sensitive_text(before.target),
+                    "after_target": redact_sensitive_text(after.target),
                 }
             )
         else:
@@ -109,7 +110,7 @@ def _diff_findings(added: List[str], changed: List[Dict], head_caps: Dict[str, C
                 )
             )
         if cap_id == "network.external":
-            endpoint = cap.target or "unknown endpoint"
+            endpoint = redact_sensitive_text(cap.target) or "unknown endpoint"
             findings.append(
                 Finding(
                     rule_id=MSC018,
