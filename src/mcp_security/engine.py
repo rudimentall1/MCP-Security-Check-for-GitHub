@@ -81,6 +81,11 @@ def scan(root: str, *, config_path: Optional[str] = None, explicit_paths: Option
 
     risk_score = compute_risk_score(findings, attack_paths, has_high_risk_escalation=False)
     decision = decide(findings, attack_paths, policy)
+    if result.errors:
+        # A report based on only part of the discovered configuration must not
+        # be presented as a clean assessment. Fail closed while preserving the
+        # parse/read errors in the report for remediation.
+        decision = Decision.BLOCK
 
     findings.sort(key=lambda f: (-f.severity.rank, f.rule_id))
 
@@ -130,6 +135,9 @@ def scan_diff(
     escalation = has_new_high_risk_capability(all_findings)
     risk_score = compute_risk_score(all_findings, attack_paths, has_high_risk_escalation=escalation)
     decision = decide(all_findings, attack_paths, policy)
+    if base_result.errors or head_result.errors:
+        # An incomplete BASE or HEAD makes the capability diff unreliable.
+        decision = Decision.BLOCK
 
     all_findings.sort(key=lambda f: (-f.severity.rank, f.rule_id))
 
