@@ -228,3 +228,39 @@ def test_parse_json_file_non_mapping_headers_returns_error():
     )
     assert len(components) == 1
     assert any("field 'headers' must be a dict" in e for e in errors)
+
+def test_json_server_url_with_unsupported_scheme_fails_closed():
+    components, errors = parse_json_file(
+        '{"mcpServers":{"remote":{"url":"ftp://example.com/mcp"}}}',
+        ".mcp.json",
+    )
+    assert len(components) == 1
+    assert any("valid absolute HTTP(S) URL" in error for error in errors)
+
+
+def test_json_server_url_without_hostname_fails_closed():
+    components, errors = parse_json_file(
+        '{"mcpServers":{"remote":{"url":"https:///mcp"}}}',
+        ".mcp.json",
+    )
+    assert len(components) == 1
+    assert any("valid absolute HTTP(S) URL" in error for error in errors)
+
+
+def test_json_server_url_with_malformed_port_fails_closed():
+    components, errors = parse_json_file(
+        '{"mcpServers":{"remote":{"url":"https://example.com:99999/mcp"}}}',
+        ".mcp.json",
+    )
+    assert len(components) == 1
+    assert any("valid absolute HTTP(S) URL" in error for error in errors)
+
+
+def test_json_server_url_with_ipv6_loopback_is_valid():
+    components, errors = parse_json_file(
+        '{"mcpServers":{"remote":{"url":"http://[::1]:9000/mcp"}}}',
+        ".mcp.json",
+    )
+    assert len(components) == 1
+    assert errors == []
+
