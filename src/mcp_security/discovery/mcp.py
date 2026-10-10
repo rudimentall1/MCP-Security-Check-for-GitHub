@@ -130,6 +130,18 @@ def discover_mcp_files(root: str, *, explicit_paths: Optional[List[str]] = None)
         for p in explicit_paths:
             abs_path = p if os.path.isabs(p) else os.path.join(root, p)
             abs_path = os.path.abspath(abs_path)
+            # Explicit paths must stay inside the scan root. Otherwise a
+            # workflow input or CLI argument could make a repository scan read
+            # unrelated runner files; checking real paths also catches parent
+            # directory symlinks and ../ traversal.
+            real_root = os.path.realpath(root)
+            real_path = os.path.realpath(abs_path)
+            try:
+                inside_root = os.path.commonpath([real_root, real_path]) == real_root
+            except ValueError:
+                inside_root = False
+            if not inside_root:
+                raise ValueError(f"explicit MCP config path is outside the scan root: {p}")
             # Explicit paths are user intent: silently skipping a missing,
             # symlinked, or oversized file could make a partial scan look clean.
             if os.path.islink(abs_path):
