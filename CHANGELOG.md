@@ -39,6 +39,7 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 - Detect literal credential values embedded in URL query, fragment, and userinfo fields, while keeping report evidence redacted.
 - Match credential-bearing URL parameter names by exact names and meaningful suffixes, avoiding substring false positives such as `tokenizer`.
 - Sanitize report-level component names, file labels, scan errors, attack-path text, and capability-diff targets at the shared report boundary, including terminal/Markdown/JSON/SARIF output.
+- Redact short literal credential values inside nested metadata based on sensitive field names, while preserving obvious placeholders and runtime references.
 - Redact URL userinfo, sensitive query/fragment values, and Bearer/Basic tokens
   from finding text and capability-diff targets before output.
 - Preserve HTTP header references such as ${input:accessToken} without reporting
