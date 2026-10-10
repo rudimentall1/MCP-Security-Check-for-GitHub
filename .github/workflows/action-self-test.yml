@@ -364,7 +364,7 @@ jobs:
   # ==========================================================================
 
   scenario-e-malformed:
-    name: "E - Malformed input -> clean handling"
+    name: "E - Malformed input -> BLOCK (fail closed)"
     runs-on: ubuntu-latest
 
     steps:
@@ -531,3 +531,50 @@ jobs:
 
           print("OK: MSC008 detected and decision is BLOCK")
           PY
+
+  # ==========================================================================
+  # G — INVALID INPUT MUST NEVER LOOK LIKE ALLOW
+  # ==========================================================================
+
+  scenario-g-invalid-input:
+    name: "G - Missing scan root and policy -> ERROR"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write safe fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fixture
+          printf '%s\\n' '{"command":"docs-server"}' > fixture/mcp.json
+
+      - name: Missing scan root must fail
+        id: missing_root
+        continue-on-error: true
+        uses: ./
+        with:
+          path: does-not-exist
+          format: json
+
+      - name: Assert missing root failed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.missing_root.outcome }}" = "failure"
+
+      - name: Missing explicit policy must fail
+        id: missing_policy
+        continue-on-error: true
+        uses: ./
+        with:
+          path: fixture
+          config: missing-policy.yaml
+          format: json
+
+      - name: Assert missing policy failed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.missing_policy.outcome }}" = "failure"

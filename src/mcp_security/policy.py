@@ -40,11 +40,17 @@ class Policy:
             return cls()
         try:
             with open(path, "r", encoding="utf-8") as fh:
-                data = yaml.safe_load(fh) or {}
-        except FileNotFoundError:
-            return cls()
+                data = yaml.safe_load(fh)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"policy file not found: {path}") from exc
 
-        policy_data = data.get("policy", data) if isinstance(data, dict) else {}
+        if not isinstance(data, dict):
+            raise ValueError(f"policy file must contain a YAML mapping: {path}")
+
+        policy_data = data.get("policy", data)
+        if not isinstance(policy_data, dict):
+            raise ValueError(f"policy section must be a YAML mapping: {path}")
+
         block_on = policy_data.get("block_on", ["critical"])
         warn_on = policy_data.get("warn_on", ["high", "medium"])
 

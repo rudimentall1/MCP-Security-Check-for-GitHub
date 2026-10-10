@@ -62,11 +62,36 @@ def test_cli_scan_writes_to_output_file(tmp_path, capsys):
     assert data["decision"] == "ALLOW"
 
 
-def test_cli_scan_nonexistent_path_returns_error_or_allow(tmp_path):
-    # A path that does not exist yields no discovered files (safe empty
-    # scan), not a crash -- os.walk on a missing dir just yields nothing.
-    exit_code = main(["scan", str(tmp_path / "does-not-exist"), "--format", "json"])
-    assert exit_code == 0
+def test_cli_scan_nonexistent_path_fails_closed(tmp_path, capsys):
+    missing = tmp_path / "does-not-exist"
+    exit_code = main(["scan", str(missing), "--format", "json"])
+    captured = capsys.readouterr()
+    assert exit_code == 3
+    assert "scan root does not exist" in captured.err
+    assert captured.out == ""
+
+
+def test_cli_missing_policy_file_fails_closed(tmp_path, capsys):
+    (tmp_path / "mcp.json").write_text('{"command": "docs-server"}', encoding="utf-8")
+    missing_policy = tmp_path / "missing-policy.yaml"
+    exit_code = main([
+        "scan", str(tmp_path), "--format", "json", "--config", str(missing_policy)
+    ])
+    captured = capsys.readouterr()
+    assert exit_code == 3
+    assert "policy file not found" in captured.err
+    assert captured.out == ""
+
+
+def test_cli_missing_explicit_file_fails_closed(tmp_path, capsys):
+    (tmp_path / "mcp.json").write_text('{"command": "docs-server"}', encoding="utf-8")
+    exit_code = main([
+        "scan", str(tmp_path), "--format", "json", "--file", "typo-mcp.json"
+    ])
+    captured = capsys.readouterr()
+    assert exit_code == 3
+    assert "explicit MCP config file not found" in captured.err
+    assert captured.out == ""
 
 
 def test_cli_diff_detects_escalation(tmp_path, capsys):

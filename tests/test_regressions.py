@@ -132,27 +132,24 @@ class TestExplicitFileSecurity(unittest.TestCase):
     """Explicit --file paths must respect security checks."""
 
     def test_explicit_file_normal_works(self):
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b'{}')
-            normal_file = f.name
-        result = discover_mcp_files(root=os.path.dirname(normal_file), explicit_paths=[normal_file])
-        result_paths = [d.path for d in result]
-        self.assertIn(os.path.abspath(normal_file), result_paths)
-        os.unlink(normal_file)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            normal_file = os.path.join(temp_dir, "custom-config.json")
+            with open(normal_file, "wb") as f:
+                f.write(b"{}")
+            result = discover_mcp_files(root=temp_dir, explicit_paths=[normal_file])
+            result_paths = [d.path for d in result]
+            self.assertIn(os.path.abspath(normal_file), result_paths)
 
     def test_explicit_file_too_large_rejected(self):
-        """File larger than DEFAULT_MAX_FILE_SIZE_BYTES should be rejected."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b'x' * (DEFAULT_MAX_FILE_SIZE_BYTES + 1024))
-            large_file = f.name
-        result = discover_mcp_files(root=os.path.dirname(large_file), explicit_paths=[large_file])
-        result_paths = [d.path for d in result]
-        self.assertNotIn(os.path.abspath(large_file), result_paths)
-        os.unlink(large_file)
+        """An explicitly requested file over the limit must fail, not be skipped."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            large_file = os.path.join(temp_dir, "large.json")
+            with open(large_file, "wb") as f:
+                f.write(b"x" * (DEFAULT_MAX_FILE_SIZE_BYTES + 1024))
+            with self.assertRaisesRegex(ValueError, "exceeds the .*byte limit"):
+                discover_mcp_files(root=temp_dir, explicit_paths=[large_file])
 
     def test_explicit_file_symlink_rejected(self):
-        # Use an isolated scan root. NamedTemporaryFile directly in /tmp makes
-        # discover_mcp_files scan every other test's temporary files as well.
         with tempfile.TemporaryDirectory() as temp_dir:
             target = os.path.join(temp_dir, "target.json")
             with open(target, "wb") as f:
@@ -163,8 +160,8 @@ class TestExplicitFileSecurity(unittest.TestCase):
             except (OSError, NotImplementedError):
                 self.skipTest("Symlinks not supported")
                 return
-            result = discover_mcp_files(root=temp_dir, explicit_paths=[symlink])
-            self.assertEqual(result, [])
+            with self.assertRaisesRegex(ValueError, "is a symlink"):
+                discover_mcp_files(root=temp_dir, explicit_paths=[symlink])
 
 
 class TestCapabilityDiffComponentIdentity(unittest.TestCase):

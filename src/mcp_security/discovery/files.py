@@ -55,6 +55,11 @@ def iter_candidate_files(
     huge unrelated file in a repository does not abort the whole scan.
     """
     root = os.path.abspath(root)
+    if not os.path.exists(root):
+        raise FileNotFoundError(f"scan root does not exist: {root}")
+    if not os.path.isdir(root):
+        raise NotADirectoryError(f"scan root is not a directory: {root}")
+
     ignored = set(ignored_dirs)
     results: List[DiscoveredFile] = []
 

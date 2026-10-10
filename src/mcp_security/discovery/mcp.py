@@ -63,14 +63,19 @@ def discover_mcp_files(root: str, *, explicit_paths: Optional[List[str]] = None)
         for p in explicit_paths:
             abs_path = p if os.path.isabs(p) else os.path.join(root, p)
             abs_path = os.path.abspath(abs_path)
-            # Skip symlinks - they may point outside the scanned tree
+            # Explicit paths are user intent: silently skipping a missing,
+            # symlinked, or oversized file could make a partial scan look clean.
             if os.path.islink(abs_path):
-                continue
-            if abs_path in matched_paths or not os.path.isfile(abs_path):
+                raise ValueError(f"explicit MCP config path is a symlink: {p}")
+            if not os.path.isfile(abs_path):
+                raise FileNotFoundError(f"explicit MCP config file not found: {p}")
+            if abs_path in matched_paths:
                 continue
             size = os.path.getsize(abs_path)
             if size > DEFAULT_MAX_FILE_SIZE_BYTES:
-                continue
+                raise ValueError(
+                    f"explicit MCP config file exceeds the {DEFAULT_MAX_FILE_SIZE_BYTES}-byte limit: {p}"
+                )
             matched.append(
                 DiscoveredFile(
                     path=abs_path,
@@ -78,4 +83,5 @@ def discover_mcp_files(root: str, *, explicit_paths: Optional[List[str]] = None)
                     size=size,
                 )
             )
+            matched_paths.add(abs_path)
     return matched
