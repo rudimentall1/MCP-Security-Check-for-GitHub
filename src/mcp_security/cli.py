@@ -100,7 +100,9 @@ def cmd_scan(args: argparse.Namespace) -> int:
     if args.verbose:
         sys.stderr.write(f"scanned {len(report.scanned_files)} file(s), {len(report.components)} component(s)\n")
 
-    return report.decision.exit_code
+    # A report can be emitted for diagnosis, but an incomplete scan must not
+    # return a successful security-gate exit code.
+    return EXIT_ERROR if report.errors else report.decision.exit_code
 
 
 def cmd_diff(args: argparse.Namespace) -> int:
@@ -114,7 +116,8 @@ def cmd_diff(args: argparse.Namespace) -> int:
     text = _render(report, args.format)
     _write_output(text, args.output)
     _write_side_outputs(report, sarif_output=args.sarif_output, markdown_output=args.markdown_output)
-    return report.decision.exit_code
+    # BASE/HEAD parse or read errors make the diff incomplete.
+    return EXIT_ERROR if report.errors else report.decision.exit_code
 
 
 def build_parser() -> argparse.ArgumentParser:
