@@ -17,6 +17,21 @@ from mcp_security.model.component import Component, ComponentKind
 SERVER_CONTAINER_KEYS = ("mcpServers", "servers", "mcp_servers")
 
 
+class DuplicateJSONKeyError(ValueError):
+    """Raised when a JSON object contains a repeated key."""
+
+
+def _reject_duplicate_keys(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    """Build a JSON object only when every key is unique."""
+    result: Dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            # Do not include the key itself; config keys can contain sensitive data.
+            raise DuplicateJSONKeyError("duplicate object key")
+        result[key] = value
+    return result
+
+
 def parse_json_file(content: str, relative_path: str) -> Tuple[List[Component], List[str]]:
     """Parse a JSON MCP config string into normalized Components.
 
@@ -26,7 +41,12 @@ def parse_json_file(content: str, relative_path: str) -> Tuple[List[Component], 
     """
     errors: List[str] = []
     try:
-        data = json.loads(content)
+        data = json.loads(content, object_pairs_hook=_reject_duplicate_keys)
+    except DuplicateJSONKeyError:
+        errors.append(
+            f"{relative_path}: duplicate JSON object key; refusing to analyze an ambiguous configuration"
+        )
+        return [], errors
     except json.JSONDecodeError as exc:
         errors.append(f"{relative_path}: malformed JSON ({exc.msg} at line {exc.lineno})")
         return [], errors
