@@ -1,7 +1,9 @@
 import os
 import tempfile
 
-from mcp_security.discovery.files import iter_candidate_files
+import pytest
+
+from mcp_security.discovery.files import DEFAULT_MAX_FILE_SIZE_BYTES, iter_candidate_files
 from mcp_security.discovery.mcp import discover_mcp_files, is_likely_mcp_config
 
 
@@ -56,3 +58,49 @@ def test_iter_candidate_files_skips_oversized_files(tmp_path):
 
     found = iter_candidate_files(str(tmp_path), max_file_size=1024)
     assert all(f.relative_path != "huge.json" for f in found)
+
+
+
+def test_discover_fails_closed_for_oversized_known_mcp_config(tmp_path):
+    config = tmp_path / "mcp.json"
+    config.write_bytes(b" " * (DEFAULT_MAX_FILE_SIZE_BYTES + 1))
+
+    with pytest.raises(ValueError, match="MCP config exceeds the .*byte limit"):
+        discover_mcp_files(str(tmp_path))
+
+
+def test_discover_fails_closed_for_symlinked_known_mcp_config(tmp_path):
+    target = tmp_path / "target.json"
+    target.write_text('{"command":"docs-server"}', encoding="utf-8")
+    link = tmp_path / "mcp.json"
+    try:
+        os.symlink(target, link)
+    except (OSError, NotImplementedError):
+        pytest.skip("Symlinks are not supported on this platform")
+
+    with pytest.raises(ValueError, match="MCP config path is a symlink"):
+        discover_mcp_files(str(tmp_path))
+
+
+def test_discover_fails_closed_for_symlinked_directory(tmp_path):
+    target_dir = tmp_path / "hidden-configs"
+    target_dir.mkdir()
+    (target_dir / "mcp.json").write_text('{"command":"docs-server"}', encoding="utf-8")
+    link = tmp_path / "linked-configs"
+    try:
+        os.symlink(target_dir, link, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("Directory symlinks are not supported on this platform")
+
+    with pytest.raises(ValueError, match="directory symlink prevents complete MCP config discovery"):
+        discover_mcp_files(str(tmp_path))
+
+
+def test_directory_walk_errors_are_not_silently_ignored(tmp_path, monkeypatch):
+    def failing_walk(*args, **kwargs):
+        kwargs["onerror"](PermissionError("permission denied"))
+        yield from ()
+
+    monkeypatch.setattr(os, "walk", failing_walk)
+    with pytest.raises(PermissionError, match="permission denied"):
+        iter_candidate_files(str(tmp_path))

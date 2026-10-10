@@ -324,12 +324,15 @@ The scanner only reads and analyzes text-based configuration files. It never:
 - evaluates untrusted Python
 - uses unsafe deserialization (`yaml.safe_load` only, standard `json.loads`
   only)
-- follows symlinks during discovery (symlinked directories are not
-  descended into, and symlinked files are skipped rather than read)
+- follows symlinks during discovery or reads their targets. A symlinked MCP
+  config, a non-ignored symlinked directory, or a recognizable MCP config over
+  the size limit causes an explicit scan error rather than a misleading ALLOW.
 
-File discovery enforces a size limit (default 2 MiB) and skips
-VCS/dependency directories (`.git`, `node_modules`, `.venv`, ...) to avoid
-scanning huge or irrelevant trees.
+File discovery enforces a size limit (default 2 MiB), skips oversized files
+that are not recognized as MCP configs, and excludes VCS/dependency directories
+(`.git`, `node_modules`, `.venv`, ...) to avoid scanning huge or irrelevant
+trees. Directory traversal errors are surfaced instead of silently returning
+a partial result.
 
 ## 15. Roadmap
 

@@ -34,6 +34,11 @@ DEFAULT_IGNORED_DIRS = {
 DEFAULT_MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024  # 2 MiB
 
 
+def _raise_walk_error(error: OSError) -> None:
+    """Do not silently accept a partial directory traversal as a clean scan."""
+    raise error
+
+
 @dataclass
 class DiscoveredFile:
     path: str
@@ -63,7 +68,9 @@ def iter_candidate_files(
     ignored = set(ignored_dirs)
     results: List[DiscoveredFile] = []
 
-    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+    for dirpath, dirnames, filenames in os.walk(
+        root, followlinks=False, onerror=_raise_walk_error
+    ):
         dirnames[:] = [d for d in dirnames if d not in ignored and not d.startswith(".git")]
         for filename in filenames:
             full_path = os.path.join(dirpath, filename)

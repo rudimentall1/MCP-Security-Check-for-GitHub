@@ -578,3 +578,61 @@ jobs:
         run: |
           set -euo pipefail
           test "${{ steps.missing_policy.outcome }}" = "failure"
+
+
+  # ==========================================================================
+  # H — AUTOMATIC DISCOVERY MUST NOT SKIP MCP CONFIGS
+  # ==========================================================================
+
+  scenario-h-incomplete-discovery:
+    name: "H - Symlinked and oversized MCP config -> ERROR"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Create oversized MCP config
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fixture
+          python3 - <<'PY'
+          from pathlib import Path
+          Path("fixture/mcp.json").write_text(" " * (2 * 1024 * 1024 + 1), encoding="utf-8")
+          PY
+
+      - name: Run scan on oversized MCP config
+        id: oversized
+        continue-on-error: true
+        uses: ./
+        with:
+          path: fixture
+          format: json
+
+      - name: Assert oversized config did not look clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.oversized.outcome }}" = "failure"
+
+      - name: Replace config with symlink
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\\n' '{"command":"docs-server"}' > fixture/target.json
+          rm fixture/mcp.json
+          ln -s target.json fixture/mcp.json
+
+      - name: Run scan on symlinked MCP config
+        id: symlinked
+        continue-on-error: true
+        uses: ./
+        with:
+          path: fixture
+          format: json
+
+      - name: Assert symlinked config did not look clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.symlinked.outcome }}" = "failure"
