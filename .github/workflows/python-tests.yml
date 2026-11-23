@@ -42,6 +42,7 @@ jobs:
               "action.yml",
               ".github/workflows/action-self-test.yml",
               ".github/workflows/python-tests.yml",
+              ".github/workflows/publish.yml",
               "examples/github-action.yml",
               "rules/default.yaml",
               ".github/dependabot.yml",
