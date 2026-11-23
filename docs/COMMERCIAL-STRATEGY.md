@@ -80,7 +80,14 @@ The paid value should come from **coordination, persistence, and scale**, not wi
 
 ## Automatic sales and delivery
 
-GitHub repository pages do not provide a native checkout-to-license system for arbitrary paid features. The intended purchase flow is:
+GitHub repository pages do not provide a native checkout-to-license system for arbitrary paid features. There are two realistic sales channels:
+
+- **Near term:** put an external checkout link in the README and product page. A hosted backend receives signed payment webhooks and provisions the customer's Pro workspace.
+- **Later:** consider a GitHub Marketplace **GitHub App** listing. Marketplace supports free and paid plans, but paid listings require an organization-owned app, verified publisher status, financial onboarding, and (for a GitHub App) at least 100 installations. Marketplace billing is not a simple paid toggle for this repository's existing GitHub Action. See the official [pricing-plan requirements](https://docs.github.com/en/apps/github-marketplace/selling-your-app-on-github-marketplace/pricing-plans-for-github-marketplace-apps) and [listing requirements](https://docs.github.com/en/apps/github-marketplace/creating-apps-for-github-marketplace/requirements-for-listing-an-app).
+
+Do not choose Lemon Squeezy for a new integration: its documentation currently says it is no longer accepting new sign-ups and will shut down on March 31, 2027. Select a currently supported payment provider only after checking merchant availability, tax handling, fees, and payout support for the owner's country.
+
+The intended purchase flow is:
 
 1. A user clicks **Upgrade to Pro** in the README, GitHub Marketplace listing (if/when eligible), or product website.
 2. The link opens an external hosted checkout.
