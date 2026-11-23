@@ -131,10 +131,10 @@ the analysis to compute outputs separately from the report it writes.
 
 ## 6. CLI usage
 
-Install the current code directly from GitHub (until a PyPI release is published):
+Install the published package from PyPI:
 
 ```bash
-python -m pip install "git+https://github.com/rudimentall1/MCP-Security-Check-for-GitHub.git@54a16d2968ef7ac30be6260e70157ada75819759"
+python -m pip install mcp-security-check
 
 mcp-security-check scan .
 mcp-security-check scan . --format json
@@ -376,8 +376,9 @@ and normal `import mcp_security` work outside of tests.
 - [CHANGELOG](CHANGELOG.md) — current release scope and known limitations.
 - [Security policy](SECURITY.md) — responsible vulnerability reporting.
 
-The first version has not been published as a GitHub Release or PyPI package yet.
-The source can be installed using the commit-pinned command above.
+Version 0.1.0 is published as a GitHub Release and on PyPI. Install it with `python -m pip install mcp-security-check`.
+
+The project follows an open-core direction: the local scanner, CLI, core rules, and GitHub Action remain free. Hosted team workflows are planned Pro capabilities and are not yet available for purchase. See [Commercial Strategy](docs/COMMERCIAL-STRATEGY.md) for the Free / Pro boundary, proposed pricing, and implementation plan.
 
 ## License
 
