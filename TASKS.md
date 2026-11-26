@@ -6,7 +6,7 @@ This is a working backlog. Statuses below reflect the repository state inspected
 
 - [ ] **Verify PyPI Trusted Publishing after repository transfer.** Confirm the publisher owner/repository/workflow/environment values for `rudimentall1/MCP-Security-Check-for-GitHub` and `publish.yml`. Do not assume the previous organization-owned publisher remains valid.
 - [x] Pin third-party Actions to full commit SHAs across `action.yml`, workflows, and the example: `actions/setup-python` v7.1.0, `actions/upload-artifact` v7.0.2, `actions/download-artifact` v8.0.2, and `pypa/gh-action-pypi-publish` at the reviewed `release/v1` commit. Exact pins are recorded in the source files.
-- [ ] Close superseded Dependabot PRs #1–#3 after this action-update PR is merged. Their changes are incorporated here after review; do not merge the old PRs separately.
+- [x] Close superseded Dependabot PRs #1–#3 after their changes were incorporated into PR #5. All three PRs are now closed.
 
 ## P1 — documentation consistency
 
