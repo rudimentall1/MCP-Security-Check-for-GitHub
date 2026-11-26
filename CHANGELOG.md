@@ -18,7 +18,7 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 - Automated Action scenarios for allow, warn, block, capability escalation,
   malformed input, non-execution of dangerous-looking commands, and invalid inputs.
 - Python support is limited to maintained interpreter versions, with CI on 3.11–3.14.
-- GitHub Actions used by the product and test workflows are pinned to full commit SHAs and checked for updates by Dependabot. The PyPI publish workflow still has unpinned action references; see the project task backlog.
+- Third-party GitHub Actions used by the composite Action, workflows, and example are pinned to full commit SHAs and checked for updates by Dependabot.
 - Node 24-compatible GitHub Actions dependencies to avoid deprecated runtime warnings.
 
 ### Security and reliability fixes included in the initial release

@@ -3,7 +3,7 @@
 **Repository:** `rudimentall1/MCP-Security-Check-for-GitHub`  
 **Default branch:** `master`  
 **Last context review:** 2026-11-26  
-**Reviewed master commit:** `c936ac44a3540e0517684943e840c0fd146dc837`
+**Reviewed master commit:** `253213f7e85c818228255a531a6af0da9f1186fe`
 
 ## Product summary
 
@@ -53,7 +53,7 @@ There is no root `package.json` in the reviewed repository tree. Do not assume N
 - `docs/PRO-PLATFORM-ARCHITECTURE.md` — proposed hosted Pro architecture.
 - `docs/COMMERCIAL-STRATEGY.md` — Free/Pro positioning and validation plan.
 
-The latest recursive Git tree inspection returned 112 entries with `truncated=false`.
+The latest recursive Git tree inspection returned 116 entries with `truncated=false`.
 
 ## Architecture and product boundary
 
@@ -72,15 +72,17 @@ The Python Tests workflow:
 - builds and checks source/wheel distributions;
 - installs the wheel in a clean virtual environment and smoke-tests ALLOW and BLOCK behavior.
 
-The publish workflow triggers on tags matching `v*`, checks the tag against `pyproject.toml`, builds distributions, and uses PyPI Trusted Publishing with an OIDC token.
+The publish workflow triggers on tags matching `v*`, checks the tag against `pyproject.toml`, builds distributions, transfers the artifact between jobs, and uses PyPI Trusted Publishing with an OIDC token.
+
+Third-party Action references are pinned to full commit SHAs. The reviewed pins in this change are: `actions/checkout` v7 (`3d3c42e5...`), `actions/setup-python` v7.1.0 (`6d4fd22b...`), `actions/upload-artifact` v7.0.2 (`cf430e03...`), `actions/download-artifact` v8.0.2 (`9000827c...`), and `pypa/gh-action-pypi-publish` `release/v1` (`7245906f...`). The example workflow also pins CodeQL Action v4.38.3 and `actions/github-script` v9.0.0 by full SHA.
 
 ## Verified repository state on 2026-11-26
 
-- Latest reviewed `master` commit: `c936ac44a3540e0517684943e840c0fd146dc837` — documentation for Pro platform architecture.
+- Latest reviewed `master` commit: `253213f7e85c818228255a531a6af0da9f1186fe` — documentation for Pro platform architecture.
 - GitHub Release `v0.1.0` exists and was published on 2026-11-23.
 - README states that version 0.1.0 is available on PyPI. PyPI registry availability was not independently queried in this review.
 - Python Tests run for the reviewed master commit completed successfully. Inspected jobs: package build/smoke test and pytest on Python 3.11, 3.12, 3.13 and 3.14; all reported success.
-- The three Dependabot PRs #1–#3 were open at review time. Their PR-triggered Python Tests runs reported success; each PR still requires compatibility review before merge.
+- Dependabot PRs #1–#3 were open at review time. Their changes were reviewed and are incorporated into the action-pinning update proposed in PR #5; close the superseded PRs after PR #5 merges.
 - No open issues were returned by the repository issue search at review time.
 - No local checkout was available for this review; runtime tests were not executed locally. CI evidence is recorded above.
 
@@ -88,7 +90,7 @@ The publish workflow triggers on tags matching `v*`, checks the tag against `pyp
 
 - At review time, `CHANGELOG.md` still labelled 0.1.0 as an unpublished release candidate, conflicting with the published GitHub Release and README.
 - The Pro architecture document's stale migration checklist was corrected in this documentation change to reflect the verified transfer from OwneraLabs to `rudimentall1`. External integration settings still require separate verification.
-- `CHANGELOG.md` claims all GitHub Actions are pinned to full commit SHAs. In the inspected `.github/workflows/publish.yml`, `actions/upload-artifact@v4`, `actions/download-artifact@v4`, and `pypa/gh-action-pypi-publish@release/v1` are not pinned to full commit SHAs. Review and reconcile this discrepancy.
+- The action-pinning update in PR #5 replaces mutable major-version/branch references in the PyPI publish workflow and upgrades artifact actions to Node 24-compatible releases. The change requires successful CI before merge.
 - Confirm PyPI Trusted Publisher configuration after repository ownership transfer before the next release. Do not assume the publisher configuration transferred automatically.
 
 ## Working commands

@@ -57,3 +57,12 @@ GitHub Release `v0.1.0` was published on 2026-11-23. README states that the same
 **Status:** Transfer verified.
 
 The repository is now `rudimentall1/MCP-Security-Check-for-GitHub`, with `master` as its default branch. Any external integrations that depend on the old `OwneraLabs` owner (including PyPI Trusted Publishing) must be checked explicitly; do not assume their settings migrated automatically.
+
+
+## D-009 — Pin third-party GitHub Actions by full commit SHA
+
+**Status:** Mandatory repository policy; workflow updates proposed in PR #5.
+
+All third-party GitHub Actions must use full commit SHAs, with a human-readable version comment. Updates must be reviewed for release notes, runtime requirements, and workflow compatibility. The artifact transfer in the PyPI publish workflow uses upload-artifact v7.0.2 and download-artifact v8.0.2, both Node 24 actions; the workflow runs on GitHub-hosted `ubuntu-latest` runners. PyPI publishing is pinned to the reviewed `release/v1` commit rather than a mutable branch name.
+
+**Evidence:** `AGENTS.md`, workflow files, and upstream Action release/commit metadata.
