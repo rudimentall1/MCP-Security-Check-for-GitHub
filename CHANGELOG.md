@@ -9,6 +9,7 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 - Pin third-party GitHub Actions used by the composite Action, workflows, and example to full commit SHAs; Dependabot checks for updates.
 - Update `actions/setup-python` to v7.1.0, `actions/upload-artifact` to v7.0.2, and `actions/download-artifact` to v8.0.2. The artifact actions use Node 24.
 - Pin `pypa/gh-action-pypi-publish` to the reviewed `release/v1` commit.
+- Align the README and example workflow on the same reviewed composite Action commit SHA.
 
 ## 0.1.0 — initial release (published 2026-11-23)
 

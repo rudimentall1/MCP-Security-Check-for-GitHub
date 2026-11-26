@@ -74,7 +74,7 @@ The Python Tests workflow:
 
 The publish workflow triggers on tags matching `v*`, checks the tag against `pyproject.toml`, builds distributions, transfers the artifact between jobs, and uses PyPI Trusted Publishing with an OIDC token.
 
-Third-party Action references are pinned to full commit SHAs. The reviewed pins in this change are: `actions/checkout` v7 (`3d3c42e5...`), `actions/setup-python` v7.1.0 (`6d4fd22b...`), `actions/upload-artifact` v7.0.2 (`cf430e03...`), `actions/download-artifact` v8.0.2 (`9000827c...`), and `pypa/gh-action-pypi-publish` `release/v1` (`7245906f...`). The example workflow also pins CodeQL Action v4.38.3 and `actions/github-script` v9.0.0 by full SHA.
+Third-party Action references are pinned to full commit SHAs. The reviewed pins in this change are: `actions/checkout` v7 (`3d3c42e5...`), `actions/setup-python` v7.1.0 (`6d4fd22b...`), `actions/upload-artifact` v7.0.2 (`cf430e03...`), `actions/download-artifact` v8.0.2 (`9000827c...`), and `pypa/gh-action-pypi-publish` `release/v1` (`7245906f...`). The README and example workflow both pin the composite Action to `54a16d29...`; the example also pins CodeQL Action v4.38.3 and `actions/github-script` v9.0.0 by full SHA.
 
 ## Verified repository state on 2026-11-26
 

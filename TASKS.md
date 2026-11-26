@@ -13,7 +13,7 @@ This is a working backlog. Statuses below reflect the repository state inspected
 - [ ] Review README claims against actual release and package registry state; PyPI availability was not independently checked in the 2026-11-26 review.
 - [x] Keep the changelog's release status and documented action-pinning claims aligned with actual GitHub releases and workflow files.
 - [x] Correct the stale repository-transfer checklist in `docs/PRO-PLATFORM-ARCHITECTURE.md`; external integration settings remain separately unverified.
-- [ ] Confirm whether the example Action SHA in README should remain the tested reference or be updated after a new Action release.
+- [x] Align the README and example workflow on the same reviewed composite Action commit SHA (`54a16d2968ef7ac30be6260e70157ada75819759`).
 
 ## P2 — product validation and future Pro work
 
