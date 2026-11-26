@@ -50,7 +50,7 @@ Significant changes must update relevant documentation, documentation must be re
 
 **Status:** GitHub Release published.
 
-GitHub Release `v0.1.0` was published on 2026-11-23. README states that the same version is published on PyPI; registry availability was not independently verified during the 2026-11-26 repository review.
+GitHub Release `v0.1.0` was published on 2026-11-23. The `Publish to PyPI` workflow run `45156853519` completed successfully: both the source distribution and wheel were uploaded, the PyPI endpoint returned HTTP 200 for each, and publish attestations were generated. Direct PyPI project metadata was not independently fetched. The current Trusted Publisher configuration after the repository transfer remains unverified.
 
 ## D-008 — Repository ownership
 

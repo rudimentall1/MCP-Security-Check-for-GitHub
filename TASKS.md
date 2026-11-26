@@ -10,7 +10,7 @@ This is a working backlog. Statuses below reflect the repository state inspected
 
 ## P1 — documentation consistency
 
-- [ ] Review README claims against actual release and package registry state; PyPI availability was not independently checked in the 2026-11-26 review.
+- [x] Verify the README's PyPI 0.1.0 release claim against the successful `Publish to PyPI` workflow run `45156853519`: both distributions uploaded with HTTP 200 and publish attestations. Direct PyPI project metadata was not independently fetched.
 - [x] Keep the changelog's release status and documented action-pinning claims aligned with actual GitHub releases and workflow files.
 - [x] Correct the stale repository-transfer checklist in `docs/PRO-PLATFORM-ARCHITECTURE.md`; external integration settings remain separately unverified.
 - [x] Align the README and example workflow on the same reviewed composite Action commit SHA (`54a16d2968ef7ac30be6260e70157ada75819759`).

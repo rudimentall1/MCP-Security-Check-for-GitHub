@@ -80,7 +80,8 @@ Third-party Action references are pinned to full commit SHAs. The reviewed pins 
 
 - Latest reviewed `master` commit: `cab78740cf77ea2fd43685e447abce306308317b` — full-SHA Action pinning, Node 24-compatible artifact actions, and synchronized Action examples.
 - GitHub Release `v0.1.0` exists and was published on 2026-11-23.
-- README states that version 0.1.0 is available on PyPI. PyPI registry availability was not independently queried in this review.
+- The `Publish to PyPI` workflow run for tag `v0.1.0` (run `45156853519`) completed successfully on 2026-11-23. The job uploaded both the source distribution and wheel; the publish action received HTTP 200 for both files and generated PyPI publish attestations. Direct PyPI project metadata was not independently fetched during this review.
+- The historical publish run predates the repository transfer. The current PyPI Trusted Publisher configuration must still be verified for the post-transfer owner/repository/workflow/environment before the next release.
 - Python Tests run for the reviewed master commit completed successfully. Inspected jobs: package build/smoke test and pytest on Python 3.11, 3.12, 3.13 and 3.14; all reported success.
 - Action Self-Test run for the reviewed master commit completed successfully; all 11 scenario jobs passed.
 - Dependabot PRs #1–#3 were closed after their changes were incorporated into PR #5. No open pull requests remained at the time of this review.
@@ -90,7 +91,7 @@ Third-party Action references are pinned to full commit SHAs. The reviewed pins 
 ## Known documentation and maintenance risks
 
 - The Pro architecture document's stale migration checklist was corrected in this documentation change to reflect the verified transfer from OwneraLabs to `rudimentall1`. External integration settings still require separate verification.
-- Confirm PyPI Trusted Publisher configuration after repository ownership transfer before the next release. Do not assume the publisher configuration transferred automatically.
+- Confirm PyPI Trusted Publisher configuration after repository ownership transfer before the next release. The historical v0.1.0 publish succeeded, but that does not prove the current post-transfer publisher configuration is still valid.
 
 ## Working commands
 
