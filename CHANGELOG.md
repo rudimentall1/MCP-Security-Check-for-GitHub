@@ -2,6 +2,14 @@
 
 Notable changes to MCP Security Check for GitHub are recorded here.
 
+## Unreleased
+
+### CI and supply chain
+
+- Pin third-party GitHub Actions used by the composite Action, workflows, and example to full commit SHAs; Dependabot checks for updates.
+- Update `actions/setup-python` to v7.1.0, `actions/upload-artifact` to v7.0.2, and `actions/download-artifact` to v8.0.2. The artifact actions use Node 24.
+- Pin `pypa/gh-action-pypi-publish` to the reviewed `release/v1` commit.
+
 ## 0.1.0 — initial release (published 2026-11-23)
 
 ### Included
@@ -18,8 +26,6 @@ Notable changes to MCP Security Check for GitHub are recorded here.
 - Automated Action scenarios for allow, warn, block, capability escalation,
   malformed input, non-execution of dangerous-looking commands, and invalid inputs.
 - Python support is limited to maintained interpreter versions, with CI on 3.11–3.14.
-- Third-party GitHub Actions used by the composite Action, workflows, and example are pinned to full commit SHAs and checked for updates by Dependabot.
-- Node 24-compatible GitHub Actions dependencies to avoid deprecated runtime warnings.
 
 ### Security and reliability fixes included in the initial release
 

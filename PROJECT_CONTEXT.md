@@ -90,7 +90,6 @@ Third-party Action references are pinned to full commit SHAs. The reviewed pins 
 
 - At review time, `CHANGELOG.md` still labelled 0.1.0 as an unpublished release candidate, conflicting with the published GitHub Release and README.
 - The Pro architecture document's stale migration checklist was corrected in this documentation change to reflect the verified transfer from OwneraLabs to `rudimentall1`. External integration settings still require separate verification.
-- The action-pinning update in PR #5 replaces mutable major-version/branch references in the PyPI publish workflow and upgrades artifact actions to Node 24-compatible releases. The change requires successful CI before merge.
 - Confirm PyPI Trusted Publisher configuration after repository ownership transfer before the next release. Do not assume the publisher configuration transferred automatically.
 
 ## Working commands
