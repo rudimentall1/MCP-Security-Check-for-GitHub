@@ -109,7 +109,7 @@ jobs:
           fail-on: critical
 ```
 
-This quick start pins a reviewed commit SHA rather than an unpublished version tag.
+This quick start pins a reviewed commit SHA for an immutable, reproducible Action revision.
 Update that SHA deliberately after reviewing a newer commit.
 
 See [action.yml](action.yml) for all inputs/outputs and
