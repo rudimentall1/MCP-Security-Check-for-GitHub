@@ -1,0 +1,59 @@
+# Architecture and Product Decisions
+
+This file records decisions supported by the current repository state and explicit project documentation. Proposed items are labelled as proposals, not implementation facts.
+
+## D-001 — Python package with src layout
+
+**Status:** Implemented.
+
+The scanner is distributed as `mcp-security-check`, uses Python `>=3.11`, setuptools, and a `src/mcp_security` package layout. Runtime dependencies currently include PyYAML; pytest is a development dependency.
+
+**Evidence:** `pyproject.toml`, source tree and CI workflow.
+
+## D-002 — Free core remains offline and usable without Pro
+
+**Status:** Product guardrail documented.
+
+The CLI, GitHub Action, core rules, BASE/HEAD diff and standard reports remain free and must not require a Pro account, network call, license check or hosted entitlement. Paid value, if implemented, should focus on hosted history, team coordination, centralized policy and audit workflows rather than withholding core security findings.
+
+**Evidence:** README and `docs/COMMERCIAL-STRATEGY.md`.
+
+## D-003 — Pro is a future hosted service, not a current product capability
+
+**Status:** Planned; not implemented in the reviewed repository.
+
+The architecture document proposes FastAPI, PostgreSQL, GitHub OAuth and Stripe. No hosted service implementation was present in the reviewed master tree. Pricing in the commercial strategy is experimental and unvalidated.
+
+**Guardrail:** Do not describe Pro as live, deployed, purchasable or production-ready until implementation and end-to-end operational evidence exist.
+
+## D-004 — Static analysis; no execution of scanned configuration
+
+**Status:** Implemented/documented security boundary.
+
+The scanner statically inspects recognizable configuration files. It must not execute MCP commands, downloaded code, shell strings or arbitrary content from scanned repositories. Findings describe potential impact and heuristic signals, not proof of malware.
+
+**Evidence:** README security model, discovery/parser implementation and regression tests.
+
+## D-005 — GitHub default branch and contribution workflow
+
+**Status:** Current repository convention.
+
+The default branch is `master`. Work should be developed on focused branches and proposed through pull requests targeting `master`; do not assume a `main` branch or push directly to the default branch.
+
+## D-006 — Documentation changes travel with implementation changes
+
+**Status:** Mandatory repository working agreement.
+
+Significant changes must update relevant documentation, documentation must be reviewed before task completion, and documentation must be committed in the same commit as the corresponding code/configuration change. See `AGENTS.md`.
+
+## D-007 — Release 0.1.0
+
+**Status:** GitHub Release published.
+
+GitHub Release `v0.1.0` was published on 2026-11-23. README states that the same version is published on PyPI; registry availability was not independently verified during the 2026-11-26 repository review.
+
+## D-008 — Repository ownership
+
+**Status:** Transfer verified.
+
+The repository is now `rudimentall1/MCP-Security-Check-for-GitHub`, with `master` as its default branch. Any external integrations that depend on the old `OwneraLabs` owner (including PyPI Trusted Publishing) must be checked explicitly; do not assume their settings migrated automatically.

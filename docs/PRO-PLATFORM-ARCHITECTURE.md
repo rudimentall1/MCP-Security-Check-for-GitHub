@@ -75,21 +75,21 @@ Do not build a complex organization/seat model until customer interviews validat
 - Privacy policy, Terms, cancellation/refund policy, data export/deletion, and support contact before taking live payments.
 - Use Stripe test mode and webhook test events before enabling live mode.
 
-## Repository migration checklist for MCP Security Check
+## Repository ownership transfer checklist
 
-After moving `rudimentall1/MCP-Security-Check-for-GitHub` to `OwneraLabs/MCP-Security-Check-for-GitHub`:
+The repository has been transferred from `OwneraLabs/MCP-Security-Check-for-GitHub` to `rudimentall1/MCP-Security-Check-for-GitHub`. The following external settings must be verified; this document does not assert that they have already been changed:
 
-1. Keep repository name and default branch unchanged.
-2. In the existing PyPI project settings, add/update Trusted Publisher to:
-   - Owner: `OwneraLabs`
+1. Keep the repository name and default branch (`master`) unchanged.
+2. In the PyPI project settings, verify or add the Trusted Publisher for:
+   - Owner: `rudimentall1`
    - Repository: `MCP-Security-Check-for-GitHub`
    - Workflow: `publish.yml`
    - Environment: `pypi`
 3. Keep `id-token: write` on the publish job and keep the dedicated `pypi` environment.
-4. Verify organization Actions settings permit required workflows and that the `pypi` environment exists with appropriate protection.
+4. Verify the `pypi` GitHub environment exists and its protection rules are appropriate.
 5. Check Dependabot, branch protection/rulesets, secrets, variables, Pages, webhooks, and external integrations after transfer.
-6. Run Python Tests and Action Self-Test on the new canonical repository URL.
-7. Test Trusted Publishing with the next release only after the PyPI publisher configuration is updated. PyPI supports multiple trusted publishers, so keep the old publisher until the new one has successfully published; then remove the obsolete entry.
+6. Run Python Tests and Action Self-Test on the new canonical repository.
+7. Test Trusted Publishing with the next release only after the publisher configuration is verified. If retaining more than one trusted publisher during transition, remove obsolete entries only after the new publisher succeeds.
 
 ## Decisions still required
 
