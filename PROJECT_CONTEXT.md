@@ -109,3 +109,14 @@ The build commands require the optional `build` and `twine` tools to be installe
 ## Maintenance rule
 
 Keep this document aligned with actual code, dependencies, CI, releases and decisions. Record review dates and commit SHAs. Mark unknown or unverified details explicitly rather than inferring them.
+
+## Advisory architecture quality scan — 2026-11-28
+
+- Added `.github/workflows/architecture-audit.yml`, a separate advisory workflow on pushes to `master`, pull requests targeting `master`, and manual dispatch.
+- The workflow uses `deslop-please` from `Bor4brn/deslop-please`, pinned to commit `cfabfb9ee417e150d5342e8ef0d6a0fe725cc9a0`, built with Rust `1.99.0`.
+- Python indexing uses `@sourcegraph/scip-python@0.6.8` and Node.js `22`.
+- Tooling runs only on ephemeral CI runners; no runtime/dev dependencies, lockfiles, or product source were changed.
+- Third-party Actions are pinned by full commit SHA (checkout v7.0.1, setup-node v7.1.0, upload-artifact v7.0.2), consistent with the supply-chain rule.
+- The JSON diagnostics and stderr are uploaded as a 14-day artifact. Scan findings and scan-time errors are advisory; tool installation failures fail the separate workflow.
+- This checks Python architecture only. It does not assess static security-analysis correctness, rule precision, untrusted-input handling, report redaction, or Action execution behavior.
+- Verification status: the workflow will be exercised by the PR. Record the first real scan result and inspect it before treating the baseline as reviewed.
