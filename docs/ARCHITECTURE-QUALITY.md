@@ -45,3 +45,11 @@ Indexes are cached outside the repository. No source changes are made by the too
 - Only Python code is scanned. The tool does not evaluate detection-rule quality, malicious-input coverage, secrets redaction, or Action behavior.
 
 This is not a security audit. It does not check authorization correctness, cryptography, dependency CVEs, secrets, or runtime behavior. It does not replace the repository's existing tests, threat-model review, dependency review, or live evidence requirements.
+
+## Initial scan baseline — 2026-11-28
+
+The first completed scan is [Architecture Audit run #46113431076](https://github.com/rudimentall1/MCP-Security-Check-for-GitHub/actions/runs/46113431076) against source head `26883243c5a22f1df2d601a997c3072b5f4f0d94`. The analyzer returned exit code `1` with **5 diagnostics** (4 field-leak, 1 wide-directory). This is a review baseline, not a list of confirmed defects.
+
+Findings concern `Capability.metadata`, `Finding.severity` (16 references across 8 modules), and `Policy.block_on` / `Policy.warn_on`; `tests/` is wide (17 entries). Review whether these are immutable value-model fields or mutable policy controls. The scan does not test the security rules, parser correctness, secret redaction, or composite Action behavior.
+
+The JSON report and indexer stderr are available in [artifact 15250682620](https://github.com/rudimentall1/MCP-Security-Check-for-GitHub/actions/runs/46113431076/artifacts/15250682620), retained for 14 days. No application source was changed and no diagnostic was suppressed. Keep this as a dated snapshot rather than a claim about later commits.
