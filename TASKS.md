@@ -27,3 +27,10 @@ This is a working backlog. Statuses below reflect the repository state inspected
 - [x] Add repository working rules in `AGENTS.md`.
 - [x] Add a source-backed architecture, dependency, CI and status summary in `PROJECT_CONTEXT.md`.
 - [x] Record known follow-up work without presenting it as completed.
+
+## P2 — architecture maintainability
+
+### Architecture quality scan
+
+- [ ] Review the first `deslop-please` Python report; separate genuine design issues from heuristic findings.
+- [ ] Keep the scanner advisory until findings are triaged and its value is demonstrated over multiple PRs.

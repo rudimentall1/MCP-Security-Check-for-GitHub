@@ -66,3 +66,13 @@ The repository is now `rudimentall1/MCP-Security-Check-for-GitHub`, with `master
 All third-party GitHub Actions must use full commit SHAs, with a human-readable version comment. Updates must be reviewed for release notes, runtime requirements, and workflow compatibility. The artifact transfer in the PyPI publish workflow uses upload-artifact v7.0.2 and download-artifact v8.0.2, both Node 24 actions; the workflow runs on GitHub-hosted `ubuntu-latest` runners. PyPI publishing is pinned to the reviewed `release/v1` commit rather than a mutable branch name.
 
 **Evidence:** `AGENTS.md`, workflow files, and upstream Action release/commit metadata.
+
+## D-010 — Advisory architectural lint
+
+**Status:** Adopted for CI as an advisory review signal.
+
+The repository uses `deslop-please` to surface structural concerns in Python source. Its findings do not establish malicious behavior, and the tool does not replace the product's own static security analysis or tests. The workflow is isolated from package/runtime dependencies, uploads inspectable reports, and does not block product CI on findings or scan-time errors.
+
+**Guardrails:** pin the CLI to a reviewed commit and all GitHub Actions by full SHA; never execute scanned repository content; do not create a blanket allowlist; review diagnostics before code changes.
+
+**Evidence:** `.github/workflows/architecture-audit.yml`, `docs/ARCHITECTURE-QUALITY.md`, and `AGENTS.md`.

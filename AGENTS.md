@@ -68,3 +68,12 @@ Before reporting a task complete:
 - Main product surfaces: Python CLI and GitHub composite Action.
 - Default branch: `master`.
 - Pro is currently documented as a future hosted-service blueprint, not a live paid service. Verify the implementation before changing this statement.
+
+## Architecture Quality Audit
+
+- The advisory architectural scan is defined in `.github/workflows/architecture-audit.yml` and documented in `docs/ARCHITECTURE-QUALITY.md`.
+- The pilot uses the pinned multi-language `deslop-please` CLI and `scip-python`; it checks Python only.
+- Treat findings as architecture signals, not proof of vulnerabilities or malware. Preserve static-only scanning: never execute repository configs, commands, or discovered scripts.
+- Preserve offline behavior, safe input handling, fail-closed handling of incomplete scans, and report redaction.
+- Do not add a blanket allowlist or use `--update-allow` without a reviewed and documented exception.
+- This scan does not replace pytest, Action self-tests, package build/wheel smoke tests, secret-redaction tests, or security review.
